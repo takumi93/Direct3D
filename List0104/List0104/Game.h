@@ -6,6 +6,8 @@
 
 #include <Windows.h>
 
+#define SAFE_RELEASE(p) if ((p) != nullptr) { (p)->Release(); (p) = nullptr; }
+
 // アプリケーション全体を表します。
 class Game {
 	//private:	

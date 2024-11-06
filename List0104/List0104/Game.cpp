@@ -2,6 +2,7 @@
 // Game.cpp
 // 
 //=============================================================================
+#include <d3d11.h>
 #include "Game.h"
 
 // 関数のプロトタイプ宣言
@@ -95,6 +96,50 @@ int Game::Run()
 		return -1;
 	}
 
+	// Direct3D 11のデバイス(パソコンのグラフィック機能そのもの、GPU)
+	ID3D11Device* graphicsDevice = nullptr;
+	// Direct3D 11のデバイス コンテキスト、
+	ID3D11DeviceContext* immediateContext = nullptr;
+	// Direct3D 11の機能レベル
+	D3D_FEATURE_LEVEL featureLevel = {};
+
+
+	HRESULT hr;	// 関数の実行結果を受け取る変数
+
+	// デバイス作成時のオプションフラグ
+	UINT creationFlags = 0;
+#if defined(_DEBUG)
+	// DEBUGビルドの際にDirect3Dのデバッグ表示機能を持たせる
+	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+	// 作成する機能レベル。希望順に指定する
+	const D3D_FEATURE_LEVEL featureLevels[] = {
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1,
+	};
+
+	// デバイス、デバイスコンテキストを作成
+	hr = D3D11CreateDevice(
+		NULL,						
+		D3D_DRIVER_TYPE_HARDWARE,	
+		0,							
+		creationFlags,				
+		featureLevels,				
+		6,							
+		D3D11_SDK_VERSION,			
+		&graphicsDevice,			
+		&featureLevel,				
+		&immediateContext);			
+	if (FAILED(hr)) {
+		MessageBox(hWnd, L"Direct3D 11デバイスを作成できませんでした。", L"エラー", MB_OK);
+		return -1;
+	}
+
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
@@ -109,5 +154,8 @@ int Game::Run()
 		}
 	}
 
-	return 0;
+	SAFE_RELEASE(immediateContext);
+	SAFE_RELEASE(graphicsDevice);
+
+	return (int)msg.wParam;
 }
