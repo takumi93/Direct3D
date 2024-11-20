@@ -3,6 +3,9 @@
 // 
 //=============================================================================
 //#include <d3d11.h> Game.hにこの機能を使用するコードを移動したため
+#include <DirectXMath.h>	// DirectXの算術ライブラリー
+#include <DirectXColors.h>	// DirectXのカラーライブラリー
+#include <iterator>
 #include "Game.h"
 
 // 関数のプロトタイプ宣言
@@ -22,15 +25,16 @@ void Game::Initialize(LPCWSTR windowTitle, int screenWidth, int screenHeight)
 	ScreenHeight = screenHeight;
 }
 
-// ウィンドウを作成。
+// ウィンドウを作成します。
 bool Game::InitWindow()
 {
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-	// ウィンドウ クラスを登録する
+	// ウィンドウ クラスを登録
 	const wchar_t CLASS_NAME[] = L"GameWindow";
 	WNDCLASSEX wndClass = {};
 	wndClass.cbSize = sizeof(WNDCLASSEX);
-	wndClass.lpfnWndProc = WindowProc;	// ウィンドウ プロシージャーを指定
+	// ウィンドウ プロシージャーを指定
+	wndClass.lpfnWndProc = WindowProc;
 	wndClass.hInstance = hInstance;
 	wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndClass.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
@@ -44,7 +48,7 @@ bool Game::InitWindow()
 	RECT rect = { 0, 0, ScreenWidth, ScreenHeight };
 	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0);
 
-	// ウィンドウを作成する
+	// ウィンドウを作成
 	auto hWnd = CreateWindowEx(0,
 		CLASS_NAME,	// ウィンドウ クラス
 		WindowTitle,
@@ -87,7 +91,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-// グラフィックデバイスを作成。
+// グラフィックデバイスを作成します。
 bool Game::InitGraphicsDevice()
 {
 	// 関数の実行結果を受け取る変数
@@ -100,7 +104,7 @@ bool Game::InitGraphicsDevice()
 	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-	// 作成するスワップチェーンについての記述
+	// 作成するスワップチェーンについての情報を格納
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 	swapChainDesc.BufferDesc.Width = ScreenWidth;
 	swapChainDesc.BufferDesc.Height = ScreenHeight;
@@ -150,7 +154,7 @@ bool Game::InitGraphicsDevice()
 	// テクスチャとシェーダーリソースビューのフォーマットを設定
 	DXGI_FORMAT textureFormat = depthStencilFormat;
 	DXGI_FORMAT resourceFormat = depthStencilFormat;
-	//設定したフォーマットを入れ替え
+	//設定したフォーマットをテクスチャとリソース用に入れ替え
 	switch (depthStencilFormat)
 	{
 	case DXGI_FORMAT_D16_UNORM:
@@ -264,6 +268,38 @@ int Game::Run()
 		return -1;
 	}
 
+	HRESULT hr = S_OK;
+
+	// 一つの頂点に含まれるデータの型
+	struct VertexPosition
+	{
+		DirectX::XMFLOAT3 position;	// 位置座標
+	};
+	// 頂点データの配列
+	VertexPosition vertices[] = {
+		{ { -1.0f, 0.0f, 0.0f }, },
+		{ {  0.0f, 1.0f, 0.0f }, },
+		{ {  1.0f, 0.0f, 0.0f }, },
+	};
+
+	// 作成する頂点バッファーについての記述
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.ByteWidth = sizeof vertices;	// 作成するバッファーのサイズ(bytes) x:4bytes,y:4bytes,z:4bytes total 12bytes
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;	// バッファーの使用方法（とりあえずDEFAULT）
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;	// Vertex Bufferとして利用する
+	bufferDesc.CPUAccessFlags = 0;			// CPUからの読み書きに使わない場合は0
+	bufferDesc.MiscFlags = 0;				// オプションのフラグ
+	bufferDesc.StructureByteStride = 0;		// 頂点バッファーとして使うなら0
+	// バッファーを作成※バッファー＝データを一時的に保存する場所
+	ID3D11Buffer* vertexBuffer = nullptr;
+	hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &vertexBuffer);
+	if (FAILED(hr) || vertexBuffer == nullptr) {
+		OutputDebugString(L"頂点バッファーを作成できませんでした。");
+		return 0;
+	}
+	// バッファーにデータを転送
+	immediateContext->UpdateSubresource(vertexBuffer, 0, NULL, vertices, 0, 0);
+
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
@@ -277,7 +313,14 @@ int Game::Run()
 		immediateContext->RSSetViewports(1, viewports);
 
 
-		// Direct3Dによる描画処理
+		// 頂点バッファーを設定
+		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer };
+		UINT strides[1] = { sizeof(VertexPosition) };
+		UINT offsets[1] = { 0 };
+		immediateContext->IASetVertexBuffers(
+			0,
+			std::size(vertexBuffers),
+			vertexBuffers, strides, offsets);
 
 
 		// バックバッファーに描画したイメージをディスプレイに表示
@@ -301,6 +344,8 @@ int Game::Run()
 			DispatchMessage(&msg);
 		}
 	}
+
+	SAFE_RELEASE(vertexBuffer);
 
 	ReleaseGraphicsDevice();
 
