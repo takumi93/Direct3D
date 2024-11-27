@@ -2,11 +2,12 @@
 // Game.cpp
 // 
 //=============================================================================
-//#include <d3d11.h> Game.hにこの機能を使用するコードを移動したため
 #include <DirectXMath.h>	// DirectXの算術ライブラリー
 #include <DirectXColors.h>	// DirectXのカラーライブラリー
 #include <iterator>
 #include "Game.h"
+#include "BasicVertexShader.h"
+#include "BasicPixelShader.h"
 
 // 関数のプロトタイプ宣言
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -14,10 +15,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 // 初期値で上書きしてアプリケーションを初期化します。
 void Game::Initialize(LPCWSTR windowTitle, int screenWidth, int screenHeight)
 {
-	// ウィンドウのタイトル
-	//this->WindowTitle = windowTitle;
-	
-	// thisキーワードは省略できる。
 	WindowTitle = windowTitle;
 	// ウィンドウの幅
 	ScreenWidth = screenWidth;
@@ -290,22 +287,64 @@ int Game::Run()
 	bufferDesc.CPUAccessFlags = 0;			// CPUからの読み書きに使わない場合は0
 	bufferDesc.MiscFlags = 0;				// オプションのフラグ
 	bufferDesc.StructureByteStride = 0;		// 頂点バッファーとして使うなら0
-	// バッファーを作成※バッファー＝データを一時的に保存する場所
+	
+	// バッファーを作成 
+	// ※バッファー＝データを一時的に保存する場所(今回はBindFlagsで頂点バッファーをしているため頂点バッファー)
 	ID3D11Buffer* vertexBuffer = nullptr;
 	hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &vertexBuffer);
 	if (FAILED(hr) || vertexBuffer == nullptr) {
 		OutputDebugString(L"頂点バッファーを作成できませんでした。");
 		return 0;
 	}
-	// バッファーにデータを転送
+	// バッファーにデータを転送（後ろで0,0と指定しているため全部指定）
 	immediateContext->UpdateSubresource(vertexBuffer, 0, NULL, vertices, 0, 0);
+
+	// 頂点シェーダーの作成
+	ID3D11VertexShader* vertexShader = nullptr;
+	hr = graphicsDevice->CreateVertexShader(
+		g_BasicVertexShader,
+		ARRAYSIZE(g_BasicVertexShader),
+		NULL,
+		&vertexShader);
+	if (FAILED(hr)) {
+		OutputDebugString(L"頂点シェーダーの作成に失敗しました。");
+		return 0;
+	}
+
+	// ピクセルシェーダーの作成
+	ID3D11PixelShader* pixelShader = nullptr;
+	hr = graphicsDevice->CreatePixelShader(
+		g_BasicPixelShader,
+		ARRAYSIZE(g_BasicPixelShader),
+		NULL,
+		&pixelShader);
+	if (FAILED(hr)) {
+		OutputDebugString(L"ピクセルシェーダーを作成できませんでした。");
+	}
+
+	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
+	// 入力レイアウトを作成
+	ID3D11InputLayout* inputLayout = nullptr;
+	hr = graphicsDevice->CreateInputLayout(
+		inputElementDescs,				// 入力要素についての記述
+		ARRAYSIZE(inputElementDescs),	// inputElementDescs配列の数
+		g_BasicVertexShader,	// 入力を受け取る頂点シェーダーのバイトコード
+		ARRAYSIZE(g_BasicVertexShader),		// バイトコードのサイズ
+		&inputLayout);
+	if (FAILED(hr)) {
+		OutputDebugString(L"入力レイアウトを作成できませんでした。");
+		return 0;
+	}
 
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
 		// レンダーターゲットを設定
 		immediateContext->OMSetRenderTargets(1, renderTargetViews, depthStencilView);
-		// 画面をクリアー
+		// 画面をクリア
 		immediateContext->ClearRenderTargetView(renderTargetViews[0], clearColor);
 		immediateContext->ClearDepthStencilView(depthStencilView,
 			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -322,6 +361,17 @@ int Game::Run()
 			std::size(vertexBuffers),
 			vertexBuffers, strides, offsets);
 
+		// シェーダーを設定
+		immediateContext->VSSetShader(vertexShader, NULL, 0);
+		immediateContext->PSSetShader(pixelShader, NULL, 0);
+
+		// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
+		immediateContext->IASetInputLayout(inputLayout);
+		// プリミティブトポロジーとしてトライアングルを設定
+		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// 描画
+		immediateContext->Draw(3, 0);
 
 		// バックバッファーに描画したイメージをディスプレイに表示
 		HRESULT hr = S_OK;
@@ -346,6 +396,9 @@ int Game::Run()
 	}
 
 	SAFE_RELEASE(vertexBuffer);
+	SAFE_RELEASE(vertexShader);
+	SAFE_RELEASE(pixelShader);
+	SAFE_RELEASE(inputLayout);
 
 	ReleaseGraphicsDevice();
 
