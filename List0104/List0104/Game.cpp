@@ -9,6 +9,8 @@
 #include "BasicVertexShader.h"
 #include "BasicPixelShader.h"
 
+using namespace DirectX;
+
 // 関数のプロトタイプ宣言
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -289,16 +291,53 @@ int Game::Run()
 	bufferDesc.MiscFlags = 0;				// オプションのフラグ
 	bufferDesc.StructureByteStride = 0;		// 頂点バッファーとして使うなら0
 	
-	// バッファーを作成 
-	// ※バッファー＝データを一時的に保存する場所(今回はBindFlagsで頂点バッファーをしているため頂点バッファー)
+	// 頂点バッファーを作成
 	ID3D11Buffer* vertexBuffer = nullptr;
 	hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &vertexBuffer);
 	if (FAILED(hr) || vertexBuffer == nullptr) {
 		OutputDebugString(L"頂点バッファーを作成できませんでした。");
-		return 0;
+		return -1;
 	}
-	// バッファーにデータを転送（後ろで0,0と指定しているため全部指定）
+	// バッファーにデータを転送
 	immediateContext->UpdateSubresource(vertexBuffer, 0, NULL, vertices, 0, 0);
+
+	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
+	struct ConstantBufferPerFrame
+	{
+		DirectX::XMFLOAT4X4 scaleMatrix; // スケール
+		DirectX::XMFLOAT4 materialColor; // カラー
+	};
+	ConstantBufferPerFrame constantBufferPerFrame = {};
+	// 定数バッファーを作成
+	ID3D11Buffer* constantBuffer = nullptr;
+	{
+		// 作成するバッファーについての記述
+		D3D11_BUFFER_DESC bufferDesc = { 0 };
+		bufferDesc.ByteWidth = sizeof(ConstantBufferPerFrame);	// 作成するバッファーのサイズ(bytes)
+		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;		// Constant Bufferとして利用する
+		bufferDesc.CPUAccessFlags = 0;
+		bufferDesc.MiscFlags = 0;
+		bufferDesc.StructureByteStride = 0;
+		// バッファーを作成
+		auto hr = graphicsDevice->CreateBuffer(&bufferDesc, nullptr, &constantBuffer);
+		if (FAILED(hr)) {
+			OutputDebugString(L"定数バッファーを作成できませんでした。");
+			return -1;
+		}
+	}
+
+	// 定数バッファーを更新
+
+	constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f);
+
+	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
+	immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
+
 
 	// 頂点シェーダーの作成
 	ID3D11VertexShader* vertexShader = nullptr;
@@ -344,6 +383,34 @@ int Game::Run()
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
+		// 定数バッファーを更新
+		if (GetAsyncKeyState(VK_CONTROL)) {
+			constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
+				0.5f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f);
+			constantBufferPerFrame.materialColor = XMFLOAT4(1, 76 / 255.0f, 76 / 255.0f, 1);
+		}
+		else if (GetAsyncKeyState(VK_SHIFT)) {
+			constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 0.5f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f);
+			constantBufferPerFrame.materialColor = XMFLOAT4(0, 0, 0, 1);
+		}
+		else {
+			constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f);
+			constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
+		}
+
+		//Direct3Dの描画処理
+
 		// レンダーターゲットを設定
 		immediateContext->OMSetRenderTargets(1, renderTargetViews, depthStencilView);
 		// 画面をクリア
@@ -366,6 +433,12 @@ int Game::Run()
 		// シェーダーを設定
 		immediateContext->VSSetShader(vertexShader, NULL, 0);
 		immediateContext->PSSetShader(pixelShader, NULL, 0);
+
+		immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
+		// シェーダーに定数バッファーを設定
+		ID3D11Buffer* constantBuffers[] = { constantBuffer };
+		immediateContext->VSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
+		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 
 		// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
 		immediateContext->IASetInputLayout(inputLayout);
@@ -398,6 +471,7 @@ int Game::Run()
 	}
 
 	SAFE_RELEASE(vertexBuffer);
+	SAFE_RELEASE(constantBuffer);
 	SAFE_RELEASE(vertexShader);
 	SAFE_RELEASE(pixelShader);
 	SAFE_RELEASE(inputLayout);

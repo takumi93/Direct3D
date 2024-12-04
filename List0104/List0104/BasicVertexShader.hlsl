@@ -4,7 +4,7 @@
 VSOutput main(VSInput input)
 {
     VSOutput output;
-    output.position = input.position;
+    output.position = mul(input.position, Scale);
     output.color = input.color;
     return output;
 }
