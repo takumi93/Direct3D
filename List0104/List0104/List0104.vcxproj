@@ -171,6 +171,9 @@
       <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).h</HeaderFileOutput>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="BasicShader.hlsli" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

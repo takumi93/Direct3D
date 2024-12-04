@@ -1,4 +1,10 @@
-float4 main( float4 position : POSITION ) : SV_POSITION
+#include "BasicShader.hlsli"
+
+// 頂点シェーダーの出力データ
+VSOutput main(VSInput input)
 {
-    return position;
+    VSOutput output;
+    output.position = input.position;
+    output.color = input.color;
+    return output;
 }

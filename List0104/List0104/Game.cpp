@@ -268,21 +268,22 @@ int Game::Run()
 	HRESULT hr = S_OK;
 
 	// 一つの頂点に含まれるデータの型
-	struct VertexPosition
+	struct VertexPositionColor
 	{
 		DirectX::XMFLOAT3 position;	// 位置座標
+		DirectX::XMFLOAT4 color;	// 頂点カラー
 	};
 	// 頂点データの配列
-	VertexPosition vertices[] = {
-		{ { -1.0f, 0.0f, 0.0f }, },
-		{ {  0.0f, 1.0f, 0.0f }, },
-		{ {  1.0f, 0.0f, 0.0f }, },
+	VertexPositionColor vertices[] = {
+		{ { -1.0f, 0.0f, 0.0f }, { 0.1f, 0.1f, 0.1f, 1.0f } },
+		{ {  0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		{ {  1.0f, 0.0f, 0.0f }, { 0.1f, 0.1f, 0.1f, 1.0f } },
 	};
 
 	// 作成する頂点バッファーについての記述
 	D3D11_BUFFER_DESC bufferDesc = {};
 	bufferDesc.ByteWidth = sizeof vertices;	// 作成するバッファーのサイズ(bytes) x:4bytes,y:4bytes,z:4bytes total 12bytes
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;	// バッファーの使用方法（とりあえずDEFAULT）
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;	// バッファーの使用方法
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;	// Vertex Bufferとして利用する
 	bufferDesc.CPUAccessFlags = 0;			// CPUからの読み書きに使わない場合は0
 	bufferDesc.MiscFlags = 0;				// オプションのフラグ
@@ -323,7 +324,8 @@ int Game::Run()
 	}
 
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,	 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	// 入力レイアウトを作成
@@ -354,7 +356,7 @@ int Game::Run()
 
 		// 頂点バッファーを設定
 		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer };
-		UINT strides[1] = { sizeof(VertexPosition) };
+		UINT strides[1] = { sizeof(VertexPositionColor) };
 		UINT offsets[1] = { 0 };
 		immediateContext->IASetVertexBuffers(
 			0,
