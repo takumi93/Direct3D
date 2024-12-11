@@ -305,7 +305,7 @@ int Game::Run()
 	struct ConstantBufferPerFrame
 	{
 		DirectX::XMFLOAT4X4 scaleMatrix; // スケール
-		DirectX::XMFLOAT4X4 rotationMatrix;	// 回転変換行列
+		DirectX::XMFLOAT4X4 rotationMatrix;	// 回転行列
 		DirectX::XMFLOAT4 materialColor; // カラー
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
@@ -379,33 +379,34 @@ int Game::Run()
 	}
 
 	XMFLOAT3 scale = { 1, 1, 1 };
-	// オイラー角による回転角度
-	XMFLOAT3 eulerAngles = {
-		XMConvertToRadians(0), XMConvertToRadians(0), XMConvertToRadians(90)
-	};
+	// 四元数による回転
+	XMVECTOR rotation = {};
+
+	float time = 0;
 
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
+		time += 0.01f;
 		// 定数バッファーを更新
 		if (GetAsyncKeyState(VK_CONTROL)) {
-			eulerAngles.z = XMConvertToRadians(90);
+			rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
 		}
 		else if (GetAsyncKeyState(VK_SHIFT)) {
-			eulerAngles.z = XMConvertToRadians(90);
+			rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, XMConvertToRadians(90.0f));
 		}
 		else {
-			eulerAngles.z += 0.01f;
+			rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, time);
 		}
 
 		const XMVECTOR scaleVector = XMLoadFloat3(&scale);
 		const XMMATRIX scaleMatrix = XMMatrixScalingFromVector(scaleVector);
 		XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, XMMatrixTranspose(scaleMatrix));
 
-		// Yaw、Pitch、Roll回転
+		// 回転行列の更新（Yaw、Pitch、Roll回転）
 		XMStoreFloat4x4(
-			&constantBufferPerFrame.rotationMatrix, XMMatrixTranspose(
-				XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&eulerAngles))));
+			&constantBufferPerFrame.rotationMatrix,
+			XMMatrixTranspose(XMMatrixRotationQuaternion(rotation)));
 
 		constantBufferPerFrame.materialColor = XMFLOAT4(1, 230 / 255.0f, 0,1);
 
