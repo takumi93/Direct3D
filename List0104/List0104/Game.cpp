@@ -379,37 +379,35 @@ int Game::Run()
 	}
 
 	XMFLOAT3 scale = { 1, 1, 1 };
-	// z軸回転の角度(Degrees)
-	float zAngle = 0;
+	// オイラー角による回転角度
+	XMFLOAT3 eulerAngles = {
+		XMConvertToRadians(0), XMConvertToRadians(0), XMConvertToRadians(90)
+	};
 
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
 		// 定数バッファーを更新
 		if (GetAsyncKeyState(VK_CONTROL)) {
-			zAngle = 0;
+			eulerAngles.z = XMConvertToRadians(90);
 		}
 		else if (GetAsyncKeyState(VK_SHIFT)) {
-			zAngle = 90;
+			eulerAngles.z = XMConvertToRadians(90);
 		}
 		else {
-			zAngle += 1.0f;
+			eulerAngles.z += 0.01f;
 		}
 
 		const XMVECTOR scaleVector = XMLoadFloat3(&scale);
 		const XMMATRIX scaleMatrix = XMMatrixScalingFromVector(scaleVector);
 		XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, XMMatrixTranspose(scaleMatrix));
 
-		const XMFLOAT4X4 rotationMatrix = {
-			 XMScalarCos(XMConvertToRadians(zAngle)), XMScalarSin(XMConvertToRadians(zAngle)), 0.0f, 0.0f,
-			-XMScalarSin(XMConvertToRadians(zAngle)), XMScalarCos(XMConvertToRadians(zAngle)), 0.0f, 0.0f,
-												0.0f,									 0.0f, 1.0f, 0.0f,
-												0.0f,									 0.0f, 0.0f, 1.0f
-		};
-
+		// Yaw、Pitch、Roll回転
 		XMStoreFloat4x4(
-			&constantBufferPerFrame.scaleMatrix,
-			XMMatrixTranspose(XMLoadFloat4x4(&rotationMatrix)));
+			&constantBufferPerFrame.rotationMatrix, XMMatrixTranspose(
+				XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&eulerAngles))));
+
+		constantBufferPerFrame.materialColor = XMFLOAT4(1, 230 / 255.0f, 0,1);
 
 
 		//Direct3Dの描画処理
