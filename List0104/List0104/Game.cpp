@@ -305,6 +305,7 @@ int Game::Run()
 	struct ConstantBufferPerFrame
 	{
 		DirectX::XMFLOAT4X4 scaleMatrix; // スケール
+		DirectX::XMFLOAT4X4 rotationMatrix;	// 回転変換行列
 		DirectX::XMFLOAT4 materialColor; // カラー
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
@@ -329,11 +330,8 @@ int Game::Run()
 
 	// 定数バッファーを更新
 
-	constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 1.0f, 0.0f,
-		1.0f, 0.0f, 0.0f, 1.0f);
+	XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&constantBufferPerFrame.rotationMatrix, XMMatrixIdentity());
 
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
 	immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
@@ -381,29 +379,38 @@ int Game::Run()
 	}
 
 	XMFLOAT3 scale = { 1, 1, 1 };
+	// z軸回転の角度(Degrees)
+	float zAngle = 0;
 
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
 		// 定数バッファーを更新
 		if (GetAsyncKeyState(VK_CONTROL)) {
-			scale.x = 0.5f;
-			scale.y = 1.0f;
-			scale.z = 1.0f;
+			zAngle = 0;
 		}
 		else if (GetAsyncKeyState(VK_SHIFT)) {
-			scale.x = 1.0f;
-			scale.y = 0.5f;
-			scale.z = 1.0f;
+			zAngle = 90;
 		}
 		else {
-			scale.x += 0.001f;
-			scale.y += 0.001f;
-			scale.z = 1.0f;
+			zAngle += 1.0f;
 		}
+
 		const XMVECTOR scaleVector = XMLoadFloat3(&scale);
 		const XMMATRIX scaleMatrix = XMMatrixScalingFromVector(scaleVector);
-		XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, scaleMatrix);
+		XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, XMMatrixTranspose(scaleMatrix));
+
+		const XMFLOAT4X4 rotationMatrix = {
+			 XMScalarCos(XMConvertToRadians(zAngle)), XMScalarSin(XMConvertToRadians(zAngle)), 0.0f, 0.0f,
+			-XMScalarSin(XMConvertToRadians(zAngle)), XMScalarCos(XMConvertToRadians(zAngle)), 0.0f, 0.0f,
+												0.0f,									 0.0f, 1.0f, 0.0f,
+												0.0f,									 0.0f, 0.0f, 1.0f
+		};
+
+		XMStoreFloat4x4(
+			&constantBufferPerFrame.scaleMatrix,
+			XMMatrixTranspose(XMLoadFloat4x4(&rotationMatrix)));
+
 
 		//Direct3Dの描画処理
 

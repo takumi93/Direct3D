@@ -2,6 +2,7 @@
 cbuffer ConstantBufferPerFrame
 {
     float4x4 Scale;
+    float4x4 Rotation;
     float4 MaterialColor;
 };
 
