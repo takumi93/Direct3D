@@ -380,34 +380,30 @@ int Game::Run()
 		return 0;
 	}
 
+	XMFLOAT3 scale = { 1, 1, 1 };
+
 	// メッセージループを実行
 	MSG msg = {};
 	while (true) {
 		// 定数バッファーを更新
 		if (GetAsyncKeyState(VK_CONTROL)) {
-			constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
-				0.5f, 0.0f, 0.0f, 0.0f,
-				0.0f, 1.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f);
-			constantBufferPerFrame.materialColor = XMFLOAT4(1, 76 / 255.0f, 76 / 255.0f, 1);
+			scale.x = 0.5f;
+			scale.y = 1.0f;
+			scale.z = 1.0f;
 		}
 		else if (GetAsyncKeyState(VK_SHIFT)) {
-			constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
-				1.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, 0.5f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f);
-			constantBufferPerFrame.materialColor = XMFLOAT4(0, 0, 0, 1);
+			scale.x = 1.0f;
+			scale.y = 0.5f;
+			scale.z = 1.0f;
 		}
 		else {
-			constantBufferPerFrame.scaleMatrix = XMFLOAT4X4(
-				1.0f, 0.0f, 0.0f, 0.0f,
-				0.0f, 1.0f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f);
-			constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
+			scale.x += 0.001f;
+			scale.y += 0.001f;
+			scale.z = 1.0f;
 		}
+		const XMVECTOR scaleVector = XMLoadFloat3(&scale);
+		const XMMATRIX scaleMatrix = XMMatrixScalingFromVector(scaleVector);
+		XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, scaleMatrix);
 
 		//Direct3Dの描画処理
 
