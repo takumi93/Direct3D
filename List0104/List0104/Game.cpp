@@ -304,9 +304,8 @@ int Game::Run()
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
 	struct ConstantBufferPerFrame
 	{
-		DirectX::XMFLOAT4X4 scaleMatrix; // スケール
-		DirectX::XMFLOAT4X4 rotationMatrix;	// 回転行列
-		DirectX::XMFLOAT4 materialColor; // カラー
+		DirectX::XMFLOAT4X4 worldMatrix;	// ワールド変換行列(スケール回転移動を統合)
+		DirectX::XMFLOAT4 materialColor;		// カラー
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
 	// 定数バッファーを作成
@@ -329,9 +328,7 @@ int Game::Run()
 	}
 
 	// 定数バッファーを更新
-
-	XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&constantBufferPerFrame.rotationMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixIdentity());
 
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
 	immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
@@ -378,9 +375,13 @@ int Game::Run()
 		return 0;
 	}
 
+	// 位置座標
+	XMFLOAT3 position = { 0, 0, 0 };
+	// 回転
+	XMFLOAT4 rotation = {};
+	XMStoreFloat4(&rotation, XMQuaternionIdentity());
+	// スケール
 	XMFLOAT3 scale = { 1, 1, 1 };
-	// 四元数による回転
-	XMVECTOR rotation = {};
 
 	float time = 0;
 
@@ -388,25 +389,29 @@ int Game::Run()
 	MSG msg = {};
 	while (true) {
 		time += 0.01f;
+		
+		// フレーム更新処理
+		if (GetAsyncKeyState(VK_RIGHT)) {
+			position.x += 0.01f;
+		}
+		else if (GetAsyncKeyState(VK_LEFT)) {
+			position.x -= 0.01f;
+		}
+		if (GetAsyncKeyState(VK_UP)) {
+			position.y += 0.01f;
+		}
+		else if (GetAsyncKeyState(VK_DOWN)) {
+			position.y -= 0.01f;
+		}
+		
 		// 定数バッファーを更新
-		if (GetAsyncKeyState(VK_CONTROL)) {
-			rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
-		}
-		else if (GetAsyncKeyState(VK_SHIFT)) {
-			rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, XMConvertToRadians(90.0f));
-		}
-		else {
-			rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, time);
-		}
+		// Scaling × Rotation × TranslationをCPU側で計算してシェーダーへ送る(シェーダーでやるより処理が軽いため)
+		const auto worldMatrix =
+			XMMatrixScalingFromVector(XMLoadFloat3(&scale)) *
+			XMMatrixRotationQuaternion(XMLoadFloat4(&rotation)) *
+			XMMatrixTranslationFromVector(XMLoadFloat3(&position));
 
-		const XMVECTOR scaleVector = XMLoadFloat3(&scale);
-		const XMMATRIX scaleMatrix = XMMatrixScalingFromVector(scaleVector);
-		XMStoreFloat4x4(&constantBufferPerFrame.scaleMatrix, XMMatrixTranspose(scaleMatrix));
-
-		// 回転行列の更新（Yaw、Pitch、Roll回転）
-		XMStoreFloat4x4(
-			&constantBufferPerFrame.rotationMatrix,
-			XMMatrixTranspose(XMMatrixRotationQuaternion(rotation)));
+		XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixTranspose(worldMatrix));
 
 		constantBufferPerFrame.materialColor = XMFLOAT4(1, 230 / 255.0f, 0,1);
 

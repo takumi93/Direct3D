@@ -1,8 +1,7 @@
 // 毎フレーム更新する定数バッファー
 cbuffer ConstantBufferPerFrame
 {
-    float4x4 Scale;
-    float4x4 Rotation;
+    float4x4 World;
     float4 MaterialColor;
 };
 

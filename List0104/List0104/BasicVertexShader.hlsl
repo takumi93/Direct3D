@@ -5,9 +5,7 @@ VSOutput main(VSInput input)
 {
     VSOutput output;
 
-    output.position = mul(input.position, Scale);
-    output.position = mul(output.position, Rotation);
-
+    output.position = mul(input.position, World);
     output.color = input.color;
     return output;
 }
