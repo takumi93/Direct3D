@@ -6,6 +6,7 @@ VSOutput main(VSInput input)
     VSOutput output;
 
     output.position = mul(input.position, World);
+    output.position = mul(output.position, View);
     output.color = input.color;
     return output;
 }

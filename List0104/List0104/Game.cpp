@@ -305,7 +305,8 @@ int Game::Run()
 	struct ConstantBufferPerFrame
 	{
 		DirectX::XMFLOAT4X4 worldMatrix;	// ワールド変換行列(スケール回転移動を統合)
-		DirectX::XMFLOAT4 materialColor;		// カラー
+		DirectX::XMFLOAT4X4 viewMatrix;		// ビュー変換行列
+		DirectX::XMFLOAT4 materialColor;	// カラー
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
 	// 定数バッファーを作成
@@ -329,6 +330,7 @@ int Game::Run()
 
 	// 定数バッファーを更新
 	XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixIdentity());
 
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
 	immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
@@ -383,6 +385,13 @@ int Game::Run()
 	// スケール
 	XMFLOAT3 scale = { 1, 1, 1 };
 
+	// カメラの位置座標
+	// ※現段階ではカメラとオブジェクトのz軸距離が1.0f以上離れると描画されない
+	constexpr XMFLOAT3 eyePosition = { 0.0f, 0.5f, -0.9f };
+	// カメラの回転
+	XMFLOAT4 cameraRotation = {};
+	XMStoreFloat4(&cameraRotation, XMQuaternionIdentity());
+
 	float time = 0;
 
 	// メッセージループを実行
@@ -390,18 +399,20 @@ int Game::Run()
 	while (true) {
 		time += 0.01f;
 		
+		// カメラのz軸回転
+		float zAngle = 0.0f;
+
 		// フレーム更新処理
-		if (GetAsyncKeyState(VK_RIGHT)) {
-			position.x += 0.01f;
+		if (GetAsyncKeyState(VK_SPACE)) {
+			// ※現段階ではz軸以外で回転させると描画されない部分が発生する
+			XMStoreFloat4(
+				&cameraRotation, 
+				XMQuaternionMultiply(XMLoadFloat4(&cameraRotation), XMQuaternionRotationRollPitchYaw(0, 0, XMConvertToRadians(1.0f))));
 		}
-		else if (GetAsyncKeyState(VK_LEFT)) {
-			position.x -= 0.01f;
-		}
-		if (GetAsyncKeyState(VK_UP)) {
-			position.y += 0.01f;
-		}
-		else if (GetAsyncKeyState(VK_DOWN)) {
-			position.y -= 0.01f;
+		else {
+			XMStoreFloat4(
+				&cameraRotation, 
+				XMQuaternionRotationRollPitchYaw(0, 0, 0));
 		}
 		
 		// 定数バッファーを更新
@@ -413,7 +424,19 @@ int Game::Run()
 
 		XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixTranspose(worldMatrix));
 
-		constantBufferPerFrame.materialColor = XMFLOAT4(1, 230 / 255.0f, 0,1);
+		constantBufferPerFrame.materialColor = XMFLOAT4(1, 230 / 255.0f, 0, 1);
+
+		// カメラの前方ベクトル
+		const auto eyeDirection =
+			XMVector3Rotate(XMVectorSet(0, 0, 1, 0), XMLoadFloat4(&cameraRotation));
+		// カメラの上方ベクトル
+		const auto eyeUpDirection =
+			XMVector3Rotate(XMVectorSet(0, 1, 0, 0), XMLoadFloat4(&cameraRotation));
+
+		// 定数バッファーを更新
+		const auto viewMatrix = XMMatrixLookToLH(
+			XMLoadFloat3(&eyePosition), eyeDirection, eyeUpDirection);
+		XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixTranspose(viewMatrix));
 
 
 		//Direct3Dの描画処理
