@@ -277,9 +277,86 @@ int Game::Run()
 	};
 	// 頂点データの配列
 	VertexPositionColor vertices[] = {
-		{ { -1.0f, 0.0f, 0.0f }, { 0.1f, 0.1f, 0.1f, 1.0f } },
-		{ {  0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		{ {  1.0f, 0.0f, 0.0f }, { 0.1f, 0.1f, 0.1f, 1.0f } },
+		////front
+		//{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ { -0.5f, -0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+		//{ {  0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ {  0.5f,  0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+
+		////right
+		//{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ {  0.5f, -0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+		//{ {  0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ {  0.5f,  0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ {  0.5f, -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+
+		////left
+		//{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ { -0.5f, -0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ { -0.5f, -0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+		//{ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ { -0.5f,  0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ { -0.5f, -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+
+		////back
+		//{ {  0.5f,  0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ { -0.5f,  0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		//{ { -0.5f, -0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+		//{ { -0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ {  0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		//{ {  0.5f,  0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+
+		// Top
+		{ { -0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+		{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+		{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+
+		// Front
+		{ {  0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
+		{ { -0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
+		{ {  0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
+
+		{ { -0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
+		{ {  0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
+		{ { -0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
+
+		// Back
+		{ { -0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
+		{ {  0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
+		{ { -0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
+
+		{ {  0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
+		{ { -0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
+		{ {  0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
+
+		// Left
+		{ { -0.5f,  0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
+		{ { -0.5f,  0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
+		{ { -0.5f, -0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
+
+		{ { -0.5f, -0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
+		{ { -0.5f, -0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
+		{ { -0.5f,  0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
+
+		// Right
+		{ {  0.5f,  0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
+		{ {  0.5f,  0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
+		{ {  0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
+
+		{ {  0.5f, -0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
+		{ {  0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
+		{ {  0.5f,  0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
 	};
 
 	// 作成する頂点バッファーについての記述
@@ -307,6 +384,7 @@ int Game::Run()
 		DirectX::XMFLOAT4X4 worldMatrix;	// ワールド変換行列(スケール回転移動を統合)
 		DirectX::XMFLOAT4X4 viewMatrix;		// ビュー変換行列
 		DirectX::XMFLOAT4X4 projectionMatrix;	// プロジェクション変換行列
+		DirectX::XMFLOAT4X4 wvpMatrix;	// ワールド×ビュー×プロジェクション変換行列
 		DirectX::XMFLOAT4 materialColor;	// カラー
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
@@ -362,7 +440,7 @@ int Game::Run()
 
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,	 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	// 入力レイアウトを作成
@@ -387,10 +465,10 @@ int Game::Run()
 	XMFLOAT3 scale = { 1, 1, 1 };
 
 	// カメラの位置座標
-	constexpr XMFLOAT3 eyePosition = { 0.0f, 0.0f, -10.0f };
+	constexpr XMFLOAT3 eyePosition = { 0.0f, 1.0f, -5.0f };
 	// カメラの回転
 	XMFLOAT4 cameraRotation = {};
-	XMStoreFloat4(&cameraRotation, XMQuaternionIdentity());
+	XMStoreFloat4(&cameraRotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(15.0f), 0, 0));
 
 	float time = 0;
 
@@ -406,13 +484,11 @@ int Game::Run()
 		if (GetAsyncKeyState(VK_SPACE)) {
 			XMStoreFloat4(
 				&rotation,
-				XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(1.0f), 0)));
-		}
-		else {
-			XMStoreFloat4(
-				&rotation,
 				XMQuaternionRotationRollPitchYaw(0, 0, 0));
 		}
+		XMStoreFloat4(
+			&rotation,
+			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(1.0f), 0)));
 		
 		// 定数バッファーを更新
 		// Scaling × Rotation × TranslationをCPU側で計算してシェーダーへ送る(シェーダーでやるより処理が軽いため)
@@ -461,6 +537,10 @@ int Game::Run()
 			fieldOfView, aspectRatio, nearZ, farZ);
 		XMStoreFloat4x4(&constantBufferPerFrame.projectionMatrix, XMMatrixTranspose(projectionMatrix));
 
+		// World × View × ProjectionをCPU側で計算してシェーダーへ送る
+		XMStoreFloat4x4(&constantBufferPerFrame.wvpMatrix, XMMatrixTranspose(
+			worldMatrix* viewMatrix* projectionMatrix));
+
 
 		//Direct3Dの描画処理
 
@@ -499,7 +579,7 @@ int Game::Run()
 		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// 描画
-		immediateContext->Draw(3, 0);
+		immediateContext->Draw(std::size(vertices), 0);
 
 		// バックバッファーに描画したイメージをディスプレイに表示
 		HRESULT hr = S_OK;

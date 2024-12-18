@@ -3,5 +3,5 @@
 // ピクセルシェーダーの入力データ
 float4 main(PSInput input) : SV_TARGET
 {
-    return MaterialColor;
+    return input.color * MaterialColor;
 }
