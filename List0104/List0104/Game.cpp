@@ -306,6 +306,7 @@ int Game::Run()
 	{
 		DirectX::XMFLOAT4X4 worldMatrix;	// ワールド変換行列(スケール回転移動を統合)
 		DirectX::XMFLOAT4X4 viewMatrix;		// ビュー変換行列
+		DirectX::XMFLOAT4X4 projectionMatrix;	// プロジェクション変換行列
 		DirectX::XMFLOAT4 materialColor;	// カラー
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
@@ -386,8 +387,7 @@ int Game::Run()
 	XMFLOAT3 scale = { 1, 1, 1 };
 
 	// カメラの位置座標
-	// ※現段階ではカメラとオブジェクトのz軸距離が1.0f以上離れると描画されない
-	constexpr XMFLOAT3 eyePosition = { 0.0f, 0.5f, -0.9f };
+	constexpr XMFLOAT3 eyePosition = { 0.0f, 0.0f, -10.0f };
 	// カメラの回転
 	XMFLOAT4 cameraRotation = {};
 	XMStoreFloat4(&cameraRotation, XMQuaternionIdentity());
@@ -404,14 +404,13 @@ int Game::Run()
 
 		// フレーム更新処理
 		if (GetAsyncKeyState(VK_SPACE)) {
-			// ※現段階ではz軸以外で回転させると描画されない部分が発生する
 			XMStoreFloat4(
-				&cameraRotation, 
-				XMQuaternionMultiply(XMLoadFloat4(&cameraRotation), XMQuaternionRotationRollPitchYaw(0, 0, XMConvertToRadians(1.0f))));
+				&rotation,
+				XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(1.0f), 0)));
 		}
 		else {
 			XMStoreFloat4(
-				&cameraRotation, 
+				&rotation,
 				XMQuaternionRotationRollPitchYaw(0, 0, 0));
 		}
 		
@@ -437,6 +436,30 @@ int Game::Run()
 		const auto viewMatrix = XMMatrixLookToLH(
 			XMLoadFloat3(&eyePosition), eyeDirection, eyeUpDirection);
 		XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixTranspose(viewMatrix));
+
+		//// 【正射影変換の場合】
+		//// スクリーン画面のアスペクト比
+		//const auto orthographicSize = 10.0f;	// ビュー空間の垂直方向のサイズ
+		//const auto nearZ = 0.3f;	// nearクリップ面
+		//const auto farZ = 1000.0f;	// farクリップ面
+		//// 定数バッファーを更新
+		//const auto projectionMatrix = XMMatrixOrthographicLH(
+		//	orthographicSize * ScreenWidth / static_cast<float>(ScreenHeight),
+		//	orthographicSize, nearZ, farZ);
+		//XMStoreFloat4x4(&constantBufferPerFrame.projectionMatrix, XMMatrixTranspose(projectionMatrix));
+
+
+		// 【パースペクティブ射影変換の場合】
+		// 視錐台の垂直方向の角度
+		constexpr auto fieldOfView = XMConvertToRadians(60);
+		// スクリーン画面のアスペクト比
+		const auto aspectRatio = ScreenWidth / static_cast<float>(ScreenHeight);
+		const auto nearZ = 0.3f;	// nearクリップ面
+		const auto farZ = 1000.0f;	// farクリップ面
+		// 定数バッファーを更新
+		const auto projectionMatrix = XMMatrixPerspectiveFovLH(
+			fieldOfView, aspectRatio, nearZ, farZ);
+		XMStoreFloat4x4(&constantBufferPerFrame.projectionMatrix, XMMatrixTranspose(projectionMatrix));
 
 
 		//Direct3Dの描画処理

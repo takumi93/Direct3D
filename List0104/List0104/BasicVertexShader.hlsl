@@ -7,6 +7,7 @@ VSOutput main(VSInput input)
 
     output.position = mul(input.position, World);
     output.position = mul(output.position, View);
+    output.position = mul(output.position, Projection);
     output.color = input.color;
     return output;
 }
