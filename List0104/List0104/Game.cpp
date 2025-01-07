@@ -7,6 +7,7 @@
 #include <iterator>
 #include "Game.h"
 #include "BasicVertexShader.h"
+#include "BasicGeometryShader.h"
 #include "BasicPixelShader.h"
 
 using namespace DirectX;
@@ -283,6 +284,12 @@ int Game::Run()
 		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
 		{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
 
+		// Buttom
+		{ {  0.5f,  -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		{ { -0.5f,  -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		{ {  0.5f,  -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+		{ { -0.5f,  -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
+
 		// Front
 		{ {  0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
 		{ { -0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
@@ -308,13 +315,14 @@ int Game::Run()
 		{ {  0.5f, -0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
 	};
 
-	constexpr UINT32 indices[] = { 
-		0, 1, 2, 3, 2, 1, 
-		4, 5, 6, 7, 6, 5, 
-		8, 9, 10, 11, 10, 9, 
-		12, 13, 14, 15, 14, 13, 
-		16, 17, 18, 19, 18, 17, 
-		20, 21, 22, 23, 22, 21 };
+	constexpr UINT32 indices[] = {
+		0, 1, 2, 3, 2, 1,
+		4, 5, 6, 7, 6, 5,
+		8, 9, 10, 11, 10, 9,
+		12, 13, 14, 15, 14, 13,
+		16, 17, 18, 19, 18, 17,
+		20, 21, 22, 23, 22, 21,
+	};
 	constexpr UINT indexCount = _countof(indices);
 
 	// 作成する頂点バッファーについての記述
@@ -406,6 +414,16 @@ int Game::Run()
 	if (FAILED(hr)) {
 		OutputDebugString(L"頂点シェーダーの作成に失敗しました。");
 		return 0;
+	}
+
+	// ジオメトリーシェーダーの作成
+	ID3D11GeometryShader* geometryShader = nullptr;
+	hr = graphicsDevice->CreateGeometryShader(
+		g_BasicGeometryShader, ARRAYSIZE(g_BasicGeometryShader),
+		NULL,
+		&geometryShader);
+	if (FAILED(hr)) {
+		OutputDebugString(L"ジオメトリーシェーダーを作成できませんでした。");
 	}
 
 	// ピクセルシェーダーの作成
@@ -546,21 +564,27 @@ int Game::Run()
 
 		// インデックスバッファーを設定
 		immediateContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		// シェーダーを設定
-		immediateContext->VSSetShader(vertexShader, NULL, 0);
-		immediateContext->PSSetShader(pixelShader, NULL, 0);
-
-		immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
-		// シェーダーに定数バッファーを設定
-		ID3D11Buffer* constantBuffers[] = { constantBuffer };
-		immediateContext->VSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
-		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
-
 		// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
 		immediateContext->IASetInputLayout(inputLayout);
 		// プリミティブトポロジーとしてトライアングルを設定
 		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// 定数バッファーを更新
+		immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
+
+		// シェーダーを設定
+		immediateContext->VSSetShader(vertexShader, NULL, 0);
+		immediateContext->GSSetShader(geometryShader, NULL, 0);
+		immediateContext->PSSetShader(pixelShader, NULL, 0);
+
+		
+		// シェーダーに定数バッファーを設定
+		ID3D11Buffer* constantBuffers[] = { constantBuffer };
+		immediateContext->VSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
+		immediateContext->GSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
+		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
+
+		
 
 		// 描画
 		immediateContext->DrawIndexed(indexCount, 0, 0);
@@ -591,6 +615,7 @@ int Game::Run()
 	SAFE_RELEASE(indexBuffer);
 	SAFE_RELEASE(constantBuffer);
 	SAFE_RELEASE(vertexShader);
+	SAFE_RELEASE(geometryShader);
 	SAFE_RELEASE(pixelShader);
 	SAFE_RELEASE(inputLayout);
 

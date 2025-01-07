@@ -4,8 +4,7 @@
 VSOutput main(VSInput input)
 {
     VSOutput output;
-
-    output.position = mul(input.position, WorldViewProjection);
+    output.position = input.position;
     output.color = input.color;
     return output;
 }

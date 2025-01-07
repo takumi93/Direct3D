@@ -22,5 +22,15 @@ struct VSOutput
     float4 color : COLOR0;
 };
 
+// ジオメトリーシェーダーの入力データ
+typedef VSOutput GSInput;
+
+// ジオメトリーシェーダーの出力データ
+struct GSOutput
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR0;
+};
+
 // ピクセルシェーダーの入力データ(ピクセルシェーダと頂点シェーダの型が一緒のため)
-typedef VSOutput PSInput;
+typedef GSOutput PSInput;
