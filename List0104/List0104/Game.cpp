@@ -277,87 +277,45 @@ int Game::Run()
 	};
 	// 頂点データの配列
 	VertexPositionColor vertices[] = {
-		////front
-		//{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ { -0.5f, -0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-
-		//{ {  0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ {  0.5f,  0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-
-		////right
-		//{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ {  0.5f, -0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-
-		//{ {  0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ {  0.5f,  0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ {  0.5f, -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-
-		////left
-		//{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ { -0.5f, -0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ { -0.5f, -0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-
-		//{ { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ { -0.5f,  0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ { -0.5f, -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-
-		////back
-		//{ {  0.5f,  0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ { -0.5f,  0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		//{ { -0.5f, -0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-
-		//{ { -0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ {  0.5f, -0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		//{ {  0.5f,  0.5f, 0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-
 		// Top
 		{ { -0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
 		{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
 		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-
 		{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
 
 		// Front
 		{ {  0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
 		{ { -0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
 		{ {  0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-
 		{ { -0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-		{ {  0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-		{ { -0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
 
 		// Back
 		{ { -0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
 		{ {  0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
 		{ { -0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-
 		{ {  0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-		{ { -0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-		{ {  0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
 
 		// Left
 		{ { -0.5f,  0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
 		{ { -0.5f,  0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
 		{ { -0.5f, -0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-
 		{ { -0.5f, -0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-		{ { -0.5f, -0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-		{ { -0.5f,  0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
 
 		// Right
 		{ {  0.5f,  0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
 		{ {  0.5f,  0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
 		{ {  0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
-
 		{ {  0.5f, -0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
-		{ {  0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
-		{ {  0.5f,  0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
 	};
+
+	constexpr UINT32 indices[] = { 
+		0, 1, 2, 3, 2, 1, 
+		4, 5, 6, 7, 6, 5, 
+		8, 9, 10, 11, 10, 9, 
+		12, 13, 14, 15, 14, 13, 
+		16, 17, 18, 19, 18, 17, 
+		20, 21, 22, 23, 22, 21 };
+	constexpr UINT indexCount = _countof(indices);
 
 	// 作成する頂点バッファーについての記述
 	D3D11_BUFFER_DESC bufferDesc = {};
@@ -377,6 +335,27 @@ int Game::Run()
 	}
 	// バッファーにデータを転送
 	immediateContext->UpdateSubresource(vertexBuffer, 0, NULL, vertices, 0, 0);
+
+	// インデックスバッファーを作成
+	ID3D11Buffer* indexBuffer = nullptr;
+	{
+		// 作成するインデックスバッファーについての記述
+		D3D11_BUFFER_DESC bufferDesc = {};
+		bufferDesc.ByteWidth = sizeof indices;
+		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bufferDesc.CPUAccessFlags = 0;
+		bufferDesc.MiscFlags = 0;
+		bufferDesc.StructureByteStride = 0;
+		// バッファーを作成
+		hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &indexBuffer);
+		if (FAILED(hr) || indexBuffer == nullptr) {
+			OutputDebugString(L"インデックスバッファーを作成できませんでした。");
+			return -1;
+		}
+		// バッファーにデータを転送
+		immediateContext->UpdateSubresource(indexBuffer, 0, NULL, indices, 0, 0);
+	}
 
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
 	struct ConstantBufferPerFrame
@@ -410,6 +389,8 @@ int Game::Run()
 	// 定数バッファーを更新
 	XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&constantBufferPerFrame.projectionMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&constantBufferPerFrame.wvpMatrix, XMMatrixIdentity());
 
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
 	immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
@@ -439,7 +420,7 @@ int Game::Run()
 	}
 
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,	 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,							   0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
@@ -563,6 +544,9 @@ int Game::Run()
 			std::size(vertexBuffers),
 			vertexBuffers, strides, offsets);
 
+		// インデックスバッファーを設定
+		immediateContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
 		// シェーダーを設定
 		immediateContext->VSSetShader(vertexShader, NULL, 0);
 		immediateContext->PSSetShader(pixelShader, NULL, 0);
@@ -579,7 +563,7 @@ int Game::Run()
 		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// 描画
-		immediateContext->Draw(std::size(vertices), 0);
+		immediateContext->DrawIndexed(indexCount, 0, 0);
 
 		// バックバッファーに描画したイメージをディスプレイに表示
 		HRESULT hr = S_OK;
@@ -604,6 +588,7 @@ int Game::Run()
 	}
 
 	SAFE_RELEASE(vertexBuffer);
+	SAFE_RELEASE(indexBuffer);
 	SAFE_RELEASE(constantBuffer);
 	SAFE_RELEASE(vertexShader);
 	SAFE_RELEASE(pixelShader);
