@@ -8,8 +8,7 @@
 #include <string>
 #include <memory>
 #include <d3d11.h>
-
-#define SAFE_RELEASE(p) if ((p) != nullptr) { (p)->Release(); (p) = nullptr; }
+#include <wrl/client.h>
 
 struct WindowSettings
 {
@@ -54,35 +53,33 @@ public:
 	int Run(const WindowSettings& settings = WindowSettings()) ;
 
 private:
-	
-
 	// メインウィンドウ
 	std::unique_ptr<MainWindow> window;
 
 	// DXGI 1.1のファクトリー
-	IDXGIFactory1* dxgiFactory = nullptr;
+	Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory;
 	// DXGI 1.1のアダプター
-	IDXGIAdapter1* dxgiAdapter = nullptr;
+	Microsoft::WRL::ComPtr<IDXGIAdapter1> dxgiAdapter;
 	// DXGI 1.1のデバイス
-	IDXGIDevice1* dxgiDevice = nullptr;
+	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
 	// Direct3D 11のデバイス(パソコンのグラフィック機能そのもの、GPU)
-	ID3D11Device* graphicsDevice = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11Device> graphicsDevice;
 	// Direct3D 11のデバイス コンテキスト
-	ID3D11DeviceContext* immediateContext = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
 	// Direct3D 11の機能レベル
 	D3D_FEATURE_LEVEL featureLevel = {};
 	// スワップチェーン
-	IDXGISwapChain* swapChain = nullptr;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
 	// レンダーターゲット
-	ID3D11RenderTargetView* renderTargetViews[1];
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
 	// バックバッファーをシェーダーで利用するためのリソース ビュー
-	ID3D11ShaderResourceView* renderTargetResourceView = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
 	// 深度ステンシルのフォーマット
 	const DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	// 深度ステンシル
-	ID3D11DepthStencilView* depthStencilView = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
 	// 深度ステンシルをシェーダーで利用するためのリソース ビュー
-	ID3D11ShaderResourceView* depthStencilResourceView = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
 	// 画面クリアーに使用するカラー
 	FLOAT clearColor[4] = { 53 / 255.0f, 70 / 255.0f, 166 / 255.0f, 1.0f };
 	// ビューポート
@@ -90,6 +87,4 @@ private:
 
 	// グラフィックデバイスを作成。Game.cpp参照
 	bool InitGraphicsDevice();
-	// グラフィックリソースを解放します。Game.cpp参照
-	void ReleaseGraphicsDevice();
 };

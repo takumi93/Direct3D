@@ -10,12 +10,25 @@
 #include "BasicPixelShader.h"
 
 using namespace DirectX;
+using namespace Microsoft::WRL;
 
 // グラフィックデバイスを作成します。
 bool Game::InitGraphicsDevice()
 {
 	// 関数の実行結果を受け取る変数
 	HRESULT hr = S_OK;
+
+	ComPtr<IDXGIFactory1> dxgiFactory;
+	ComPtr<IDXGIAdapter1> dxgiAdapter;
+	ComPtr<IDXGIDevice1> dxgiDevice;
+	ComPtr<ID3D11Device> graphicsDevice;
+	ComPtr<ID3D11DeviceContext> immediateContext;
+	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL();
+	ComPtr<IDXGISwapChain> swapChain;
+	ComPtr<ID3D11RenderTargetView> renderTargetView;
+	ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
+	ComPtr<ID3D11DepthStencilView> depthStencilView;
+	ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
 
 	// デバイス作成時のオプションフラグ
 	UINT creationFlags = 0;
@@ -36,19 +49,20 @@ bool Game::InitGraphicsDevice()
 	// ID3D11Device -> IDXGIDevice1 -> IDXGIAdapter -> IDXGIAdapter1 -> IDXGIFactory1
 
 	//ID3D11Device->IDXGIDevice1
-	if (FAILED(graphicsDevice->QueryInterface(&dxgiDevice))) {
+	if (FAILED(graphicsDevice.As(&dxgiDevice))) {
 		return false;
 	}
-	//IDXGIDevice1->IDXGIAdapter
-	IDXGIAdapter* adapter = nullptr;
-	if (FAILED(dxgiDevice->GetAdapter(&adapter))) {
-		return false;
+	{
+		//IDXGIDevice1->IDXGIAdapter
+		ComPtr<IDXGIAdapter> adapter;
+		if (FAILED(dxgiDevice->GetAdapter(&adapter))) {
+			return false;
+		}
+		//IDXGIAdapter->IDXGIAdapter1
+		if (FAILED(adapter.As(&dxgiAdapter))) {
+			return false;
+		}
 	}
-	//IDXGIAdapter->IDXGIAdapter1
-	if (FAILED(adapter->QueryInterface(&dxgiAdapter))) {
-		return false;
-	}
-	adapter->Release();
 	//IDXGIAdapter1->IDXGIFactory1
 	if (FAILED(dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory)))) {
 		return false;
@@ -71,34 +85,32 @@ bool Game::InitGraphicsDevice()
 
 	// 画面サイズを変える際にスワップチェーンだけ変更する必要があるため
 	//スワップチェーンを作成
-	hr = dxgiFactory->CreateSwapChain(graphicsDevice, &swapChainDesc, &swapChain);
+	hr = dxgiFactory->CreateSwapChain(graphicsDevice.Get(), &swapChainDesc, &swapChain);
 	if (FAILED(hr)) {
 		return false;
 	}
 
 	// バックバッファーを取得
-	ID3D11Texture2D* backBuffer = nullptr;
-	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-	//失敗したら処理しない
-	if (FAILED(hr)) {
-		return false;
+	{
+		ComPtr<ID3D11Texture2D> backBuffer;
+		hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+		//失敗したら処理しない
+		if (FAILED(hr)) {
+			return false;
+		}
+		// バックバッファーにアクセスするためのレンダーターゲット ビューを作成
+		hr = graphicsDevice->CreateRenderTargetView(backBuffer.Get(), NULL, &renderTargetView);
+		//失敗したら処理しない
+		if (FAILED(hr)) {
+			return false;
+		}
+		// バックバッファーにシェーダーからアクセスするためのリソース ビューを作成
+		hr = graphicsDevice->CreateShaderResourceView(backBuffer.Get(), NULL, &renderTargetResourceView);
+		//失敗したら処理しない
+		if (FAILED(hr)) {
+			return false;
+		}
 	}
-	// バックバッファーにアクセスするためのレンダーターゲット ビューを作成
-	hr = graphicsDevice->CreateRenderTargetView(backBuffer, NULL, &renderTargetViews[0]);
-	//失敗したら処理しない
-	if (FAILED(hr)) {
-		return false;
-	}
-	// バックバッファーにシェーダーからアクセスするためのリソース ビューを作成
-	hr = graphicsDevice->CreateShaderResourceView(
-		backBuffer,
-		NULL,
-		&renderTargetResourceView);
-	//失敗したら処理しない
-	if (FAILED(hr)) {
-		return false;
-	}
-	SAFE_RELEASE(backBuffer);
 
 	// テクスチャとシェーダーリソースビューのフォーマットを設定
 	DXGI_FORMAT textureFormat = depthStencilFormat;
@@ -124,61 +136,57 @@ bool Game::InitGraphicsDevice()
 		break;
 	}
 	// 深度ステンシルを作成
-	ID3D11Texture2D* depthStencil = nullptr;
-	D3D11_TEXTURE2D_DESC depthStencilDesc = {};
-	depthStencilDesc.Width = swapChainDesc.BufferDesc.Width;
-	depthStencilDesc.Height = swapChainDesc.BufferDesc.Height;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.ArraySize = 1;
-	depthStencilDesc.Format = textureFormat;
-	depthStencilDesc.SampleDesc = swapChainDesc.SampleDesc;
-	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthStencilDesc.BindFlags =
-		D3D11_BIND_DEPTH_STENCIL |
-		D3D11_BIND_SHADER_RESOURCE;	// シェーダーリソースとして使用することを設定
-	depthStencilDesc.CPUAccessFlags = 0;
-	depthStencilDesc.MiscFlags = 0;
-	hr = graphicsDevice->CreateTexture2D(&depthStencilDesc, NULL, &depthStencil);
-	//失敗したら処理しない
-	if (FAILED(hr)) {
-		return 0;
-	}
-	// 深度ステンシルにアクセスするためのビューを作成
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
-	depthStencilViewDesc.Format = depthStencilFormat;
-	if (depthStencilDesc.SampleDesc.Count > 0) {
-		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	}
-	else {
-		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	{
+		ComPtr<ID3D11Texture2D> depthStencil;
+		D3D11_TEXTURE2D_DESC depthStencilDesc = {};
+		depthStencilDesc.Width = swapChainDesc.BufferDesc.Width;
+		depthStencilDesc.Height = swapChainDesc.BufferDesc.Height;
+		depthStencilDesc.MipLevels = 1;
+		depthStencilDesc.ArraySize = 1;
+		depthStencilDesc.Format = textureFormat;
+		depthStencilDesc.SampleDesc = swapChainDesc.SampleDesc;
+		depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+		depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // シェーダーリソースとして使用することを設定
+		depthStencilDesc.CPUAccessFlags = 0;
+		depthStencilDesc.MiscFlags = 0;
+		hr = graphicsDevice->CreateTexture2D(&depthStencilDesc, NULL, &depthStencil);
+		//失敗したら処理しない
+		if (FAILED(hr)) {
+			return false;
+		}
+		// 深度ステンシルにアクセスするためのビューを作成
+		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
+		depthStencilViewDesc.Format = depthStencilFormat;
+		if (depthStencilDesc.SampleDesc.Count > 0) {
+			depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+		}
+		else {
+			depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+			depthStencilViewDesc.Texture2D.MipSlice = 0;
+		}
 		depthStencilViewDesc.Texture2D.MipSlice = 0;
+		hr = graphicsDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &depthStencilView);
+		//失敗したら処理しない
+		if (FAILED(hr)) {
+			return false;
+		}
+		// 深度ステンシルにシェーダーからアクセスするためのリソース ビューを作成
+		D3D11_SHADER_RESOURCE_VIEW_DESC depthStencilResourceViewDesc = {};
+		depthStencilResourceViewDesc.Format = resourceFormat;
+		if (depthStencilDesc.SampleDesc.Count > 0) {
+			depthStencilResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+		}
+		else {
+			depthStencilResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			depthStencilResourceViewDesc.Texture2D.MostDetailedMip = 0;
+			depthStencilResourceViewDesc.Texture2D.MipLevels = 1;
+		}
+		hr = graphicsDevice->CreateShaderResourceView(depthStencil.Get(), &depthStencilResourceViewDesc, &depthStencilResourceView);
+		//失敗したら処理しない
+		if (FAILED(hr)) {
+			return false;
+		}
 	}
-	depthStencilViewDesc.Texture2D.MipSlice = 0;
-	hr = graphicsDevice->CreateDepthStencilView(depthStencil, &depthStencilViewDesc, &depthStencilView);
-	//失敗したら処理しない
-	if (FAILED(hr)) {
-		return 0;
-	}
-	// 深度ステンシルにシェーダーからアクセスするためのリソース ビューを作成
-	D3D11_SHADER_RESOURCE_VIEW_DESC depthStencilResourceViewDesc = {};
-	depthStencilResourceViewDesc.Format = resourceFormat;
-	if (depthStencilDesc.SampleDesc.Count > 0) {
-		depthStencilResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
-	}
-	else {
-		depthStencilResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		depthStencilResourceViewDesc.Texture2D.MostDetailedMip = 0;
-		depthStencilResourceViewDesc.Texture2D.MipLevels = 1;
-	}
-	hr = graphicsDevice->CreateShaderResourceView(
-		depthStencil,
-		&depthStencilResourceViewDesc,
-		&depthStencilResourceView);
-	//失敗したら処理しない
-	if (FAILED(hr)) {
-		return 0;
-	}
-	SAFE_RELEASE(depthStencil);
 
 	// ビューポートを指定
 	viewports[0].Width = static_cast<FLOAT>(window->GetWidth());
@@ -188,22 +196,20 @@ bool Game::InitGraphicsDevice()
 	viewports[0].TopLeftX = 0.0f;
 	viewports[0].TopLeftY = 0.0f;
 
-	return true;
-}
+	// 初期化がすべて成功したらメンバー変数を更新する
+	this->dxgiFactory = dxgiFactory;
+	this->dxgiAdapter = dxgiAdapter;
+	this->dxgiDevice = dxgiDevice;
+	this->graphicsDevice = graphicsDevice;
+	this->immediateContext = immediateContext;
+	this->featureLevel = featureLevel;
+	this->swapChain = swapChain;
+	this->renderTargetView = renderTargetView;
+	this->renderTargetResourceView = renderTargetResourceView;
+	this->depthStencilView = depthStencilView;
+	this->depthStencilResourceView = depthStencilResourceView;
 
-// 使用したグラフィックリソースを解放。
-void Game::ReleaseGraphicsDevice()
-{
-	SAFE_RELEASE(depthStencilResourceView);
-	SAFE_RELEASE(depthStencilView);
-	SAFE_RELEASE(renderTargetResourceView);
-	SAFE_RELEASE(renderTargetViews[0]);
-	SAFE_RELEASE(swapChain);
-	SAFE_RELEASE(immediateContext);
-	SAFE_RELEASE(graphicsDevice);
-	SAFE_RELEASE(dxgiDevice);
-	SAFE_RELEASE(dxgiAdapter);
-	SAFE_RELEASE(dxgiFactory);
+	return true;
 }
 
 // メッセージループを実行
@@ -236,7 +242,7 @@ int Game::Run(const WindowSettings& settings)
 		DirectX::XMFLOAT4 color;	// 頂点カラー
 	};
 	// 頂点データの配列
-	VertexPositionColor vertices[] = {
+	constexpr VertexPositionColor vertices[] = {
 		// Top
 		{ { -0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
 		{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
@@ -283,8 +289,10 @@ int Game::Run(const WindowSettings& settings)
 		20, 21, 22, 23, 22, 21,
 	};
 	constexpr UINT indexCount = _countof(indices);
-
-	// 作成する頂点バッファーについての記述
+	
+	
+	// 頂点バッファーを作成
+	ComPtr<ID3D11Buffer> vertexBuffer;
 	D3D11_BUFFER_DESC bufferDesc = {};
 	bufferDesc.ByteWidth = sizeof vertices;	// 作成するバッファーのサイズ(bytes) x:4bytes,y:4bytes,z:4bytes total 12bytes
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;	// バッファーの使用方法
@@ -292,19 +300,16 @@ int Game::Run(const WindowSettings& settings)
 	bufferDesc.CPUAccessFlags = 0;			// CPUからの読み書きに使わない場合は0
 	bufferDesc.MiscFlags = 0;				// オプションのフラグ
 	bufferDesc.StructureByteStride = 0;		// 頂点バッファーとして使うなら0
-	
-	// 頂点バッファーを作成
-	ID3D11Buffer* vertexBuffer = nullptr;
 	hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &vertexBuffer);
 	if (FAILED(hr) || vertexBuffer == nullptr) {
 		OutputDebugString(L"頂点バッファーを作成できませんでした。");
 		return -1;
 	}
 	// バッファーにデータを転送
-	immediateContext->UpdateSubresource(vertexBuffer, 0, NULL, vertices, 0, 0);
+	immediateContext->UpdateSubresource(vertexBuffer.Get(), 0, NULL, vertices, 0, 0);
 
 	// インデックスバッファーを作成
-	ID3D11Buffer* indexBuffer = nullptr;
+	ComPtr<ID3D11Buffer> indexBuffer;
 	{
 		// 作成するインデックスバッファーについての記述
 		D3D11_BUFFER_DESC bufferDesc = {};
@@ -321,7 +326,7 @@ int Game::Run(const WindowSettings& settings)
 			return -1;
 		}
 		// バッファーにデータを転送
-		immediateContext->UpdateSubresource(indexBuffer, 0, NULL, indices, 0, 0);
+		immediateContext->UpdateSubresource(indexBuffer.Get(), 0, NULL, indices, 0, 0);
 	}
 
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
@@ -335,7 +340,7 @@ int Game::Run(const WindowSettings& settings)
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
 	// 定数バッファーを作成
-	ID3D11Buffer* constantBuffer = nullptr;
+	ComPtr<ID3D11Buffer> constantBuffer;
 	{
 		// 作成するバッファーについての記述
 		D3D11_BUFFER_DESC bufferDesc = { 0 };
@@ -360,11 +365,11 @@ int Game::Run(const WindowSettings& settings)
 	XMStoreFloat4x4(&constantBufferPerFrame.wvpMatrix, XMMatrixIdentity());
 
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
-	immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
+	immediateContext->UpdateSubresource(constantBuffer.Get(), 0, NULL, &constantBufferPerFrame, 0, 0);
 
 
 	// 頂点シェーダーの作成
-	ID3D11VertexShader* vertexShader = nullptr;
+	ComPtr<ID3D11VertexShader> vertexShader;
 	hr = graphicsDevice->CreateVertexShader(
 		g_BasicVertexShader,
 		ARRAYSIZE(g_BasicVertexShader),
@@ -376,7 +381,7 @@ int Game::Run(const WindowSettings& settings)
 	}
 
 	// ジオメトリーシェーダーの作成
-	ID3D11GeometryShader* geometryShader = nullptr;
+	ComPtr<ID3D11GeometryShader> geometryShader;
 	hr = graphicsDevice->CreateGeometryShader(
 		g_BasicGeometryShader, ARRAYSIZE(g_BasicGeometryShader),
 		NULL,
@@ -386,7 +391,7 @@ int Game::Run(const WindowSettings& settings)
 	}
 
 	// ピクセルシェーダーの作成
-	ID3D11PixelShader* pixelShader = nullptr;
+	ComPtr<ID3D11PixelShader> pixelShader;
 	hr = graphicsDevice->CreatePixelShader(
 		g_BasicPixelShader,
 		ARRAYSIZE(g_BasicPixelShader),
@@ -402,7 +407,7 @@ int Game::Run(const WindowSettings& settings)
 	};
 
 	// 入力レイアウトを作成
-	ID3D11InputLayout* inputLayout = nullptr;
+	ComPtr<ID3D11InputLayout> inputLayout;
 	hr = graphicsDevice->CreateInputLayout(
 		inputElementDescs,				// 入力要素についての記述
 		ARRAYSIZE(inputElementDescs),	// inputElementDescs配列の数
@@ -503,17 +508,18 @@ int Game::Run(const WindowSettings& settings)
 		//Direct3Dの描画処理
 
 		// レンダーターゲットを設定
-		immediateContext->OMSetRenderTargets(1, renderTargetViews, depthStencilView);
+		ID3D11RenderTargetView* renderTargetViews[] = { renderTargetView.Get() };
+		immediateContext->OMSetRenderTargets(_countof(renderTargetViews), renderTargetViews, depthStencilView.Get());
 		// 画面をクリア
 		immediateContext->ClearRenderTargetView(renderTargetViews[0], clearColor);
-		immediateContext->ClearDepthStencilView(depthStencilView,
+		immediateContext->ClearDepthStencilView(depthStencilView.Get(),
 			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		// ビューポートを設定
 		immediateContext->RSSetViewports(1, viewports);
 
 
 		// 頂点バッファーを設定
-		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer };
+		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer.Get()};
 		UINT strides[1] = { sizeof(VertexPositionColor) };
 		UINT offsets[1] = { 0 };
 		immediateContext->IASetVertexBuffers(
@@ -522,23 +528,23 @@ int Game::Run(const WindowSettings& settings)
 			vertexBuffers, strides, offsets);
 
 		// インデックスバッファーを設定
-		immediateContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		immediateContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 		// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
-		immediateContext->IASetInputLayout(inputLayout);
+		immediateContext->IASetInputLayout(inputLayout.Get());
 		// プリミティブトポロジーとしてトライアングルを設定
 		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// 定数バッファーを更新
-		immediateContext->UpdateSubresource(constantBuffer, 0, NULL, &constantBufferPerFrame, 0, 0);
+		immediateContext->UpdateSubresource(constantBuffer.Get(), 0, NULL, &constantBufferPerFrame, 0, 0);
 
 		// シェーダーを設定
-		immediateContext->VSSetShader(vertexShader, NULL, 0);
-		immediateContext->GSSetShader(geometryShader, NULL, 0);
-		immediateContext->PSSetShader(pixelShader, NULL, 0);
+		immediateContext->VSSetShader(vertexShader.Get(), NULL, 0);
+		immediateContext->GSSetShader(geometryShader.Get(), NULL, 0);
+		immediateContext->PSSetShader(pixelShader.Get(), NULL, 0);
 
 		
 		// シェーダーに定数バッファーを設定
-		ID3D11Buffer* constantBuffers[] = { constantBuffer };
+		ID3D11Buffer* constantBuffers[] = { constantBuffer.Get() };
 		immediateContext->VSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 		immediateContext->GSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
@@ -569,16 +575,6 @@ int Game::Run(const WindowSettings& settings)
 			DispatchMessage(&msg);
 		}
 	}
-
-	SAFE_RELEASE(vertexBuffer);
-	SAFE_RELEASE(indexBuffer);
-	SAFE_RELEASE(constantBuffer);
-	SAFE_RELEASE(vertexShader);
-	SAFE_RELEASE(geometryShader);
-	SAFE_RELEASE(pixelShader);
-	SAFE_RELEASE(inputLayout);
-
-	ReleaseGraphicsDevice();
 
 	return (int)msg.wParam;
 }
