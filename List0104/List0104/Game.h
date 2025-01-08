@@ -5,31 +5,66 @@
 #pragma once
 
 #include <Windows.h>
+#include <string>
+#include <memory>
 #include <d3d11.h>
 
 #define SAFE_RELEASE(p) if ((p) != nullptr) { (p)->Release(); (p) = nullptr; }
 
+struct WindowSettings
+{
+	// ウィンドウのタイトル
+	std::wstring title = L"タイトル";
+	// ウィンドウの幅
+	int screenWidth = 640;
+	// ウィンドウの高さ
+	int screenHeight = 480;
+};
+
+class MainWindow {
+public:
+	// このクラスのインスタンスを初期化します。
+	MainWindow(const WindowSettings& settings = WindowSettings());
+	virtual ~MainWindow() = default;
+
+	// このウィンドウの幅を取得します。
+	int GetWidth() const;
+	// このウィンドウの高さを取得します。
+	int GetHeight() const;
+	// このウィンドウのハンドルを取得します。
+	HWND GetHandle() const;
+
+private:
+	// 関数のプロトタイプ宣言
+	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+	WindowSettings settings;
+	// ウィンドウのハンドル
+	HWND handle = NULL;
+};
+
 // アプリケーション全体を表します。
 class Game {
 public:
-	// 必要な情報を上書きすることでアプリケーションを初期化。
-	void Initialize(LPCWSTR windowTitle, int screenWidth, int screenHeight);
-	// メッセージループを実行。
-	int Run();
+	//// このクラスのインスタンスを初期化します。
+	//Game() noexcept = default;
+	//virtual ~Game() = default;
+
+	// メッセージループを実行します。
+	int Run(const WindowSettings& settings = WindowSettings()) ;
 
 private:
-	// ウィンドウのタイトル
-	LPCWSTR WindowTitle = L"タイトル";
-	// ウィンドウの幅
-	int ScreenWidth = 640;
-	// ウィンドウの高さ
-	int ScreenHeight = 480;
-	// ウィンドウのハンドル
-	HWND hWnd = NULL;
+	
 
-	//ウィンドウの作成
-	bool InitWindow();
+	// メインウィンドウ
+	std::unique_ptr<MainWindow> window;
 
+	// DXGI 1.1のファクトリー
+	IDXGIFactory1* dxgiFactory = nullptr;
+	// DXGI 1.1のアダプター
+	IDXGIAdapter1* dxgiAdapter = nullptr;
+	// DXGI 1.1のデバイス
+	IDXGIDevice1* dxgiDevice = nullptr;
 	// Direct3D 11のデバイス(パソコンのグラフィック機能そのもの、GPU)
 	ID3D11Device* graphicsDevice = nullptr;
 	// Direct3D 11のデバイス コンテキスト

@@ -3,93 +3,13 @@
 // 
 //=============================================================================
 #include <DirectXMath.h>	// DirectXの算術ライブラリー
-#include <DirectXColors.h>	// DirectXのカラーライブラリー
-#include <iterator>
+#include <exception>
 #include "Game.h"
 #include "BasicVertexShader.h"
 #include "BasicGeometryShader.h"
 #include "BasicPixelShader.h"
 
 using namespace DirectX;
-
-// 関数のプロトタイプ宣言
-LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-// 初期値で上書きしてアプリケーションを初期化します。
-void Game::Initialize(LPCWSTR windowTitle, int screenWidth, int screenHeight)
-{
-	WindowTitle = windowTitle;
-	// ウィンドウの幅
-	ScreenWidth = screenWidth;
-	// ウィンドウの高さ
-	ScreenHeight = screenHeight;
-}
-
-// ウィンドウを作成します。
-bool Game::InitWindow()
-{
-	HINSTANCE hInstance = GetModuleHandle(NULL);
-	// ウィンドウ クラスを登録
-	const wchar_t CLASS_NAME[] = L"GameWindow";
-	WNDCLASSEX wndClass = {};
-	wndClass.cbSize = sizeof(WNDCLASSEX);
-	// ウィンドウ プロシージャーを指定
-	wndClass.lpfnWndProc = WindowProc;
-	wndClass.hInstance = hInstance;
-	wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wndClass.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
-	wndClass.lpszClassName = CLASS_NAME;
-	//ウィンドウクラスの登録確認
-	if (!RegisterClassEx(&wndClass)) {
-		return 0;
-	}
-
-	// クライアント領域が指定した解像度になるウィンドウサイズを計算
-	RECT rect = { 0, 0, ScreenWidth, ScreenHeight };
-	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, FALSE, 0);
-
-	// ウィンドウを作成
-	auto hWnd = CreateWindowEx(0,
-		CLASS_NAME,	// ウィンドウ クラス
-		WindowTitle,
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		(rect.right - rect.left), (rect.bottom - rect.top),
-		NULL, NULL, hInstance, NULL);
-	//hWndの正常性確認
-	if (hWnd == NULL) {
-		return false;
-	}
-
-	//ウィンドウの表示と更新
-	ShowWindow(hWnd, SW_SHOWNORMAL);
-	UpdateWindow(hWnd);
-
-	// この場合、thisを省略できないため記載
-	this->hWnd = hWnd;
-
-	return true;
-}
-
-// ウィンドウ メッセージを処理するプロシージャー
-LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg) {
-	case WM_CLOSE:
-		// ウィンドウを閉じたとき確認用のメッセージボックスを表示
-		if (MessageBox(hWnd, L"ウィンドウを閉じますか？", L"メッセージ", MB_OKCANCEL) == IDOK) {
-			DestroyWindow(hWnd);
-		}
-		return 0;
-
-	case WM_DESTROY:
-		// アプリケーションを終了
-		PostQuitMessage(0);
-		return 0;
-	}
-
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
 
 // グラフィックデバイスを作成します。
 bool Game::InitGraphicsDevice()
@@ -104,10 +24,40 @@ bool Game::InitGraphicsDevice()
 	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
+	// デバイス、デバイスコンテキストを作成
+	hr = D3D11CreateDevice(
+		NULL, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, NULL, 0, D3D11_SDK_VERSION,
+		&graphicsDevice, &featureLevel, &immediateContext);
+	if (FAILED(hr)) {
+		return 0;
+	}
+
+	// Direct3D 11デバイスからDXGIインターフェイスを順に変換し取得（取得できない場合エラー）
+	// ID3D11Device -> IDXGIDevice1 -> IDXGIAdapter -> IDXGIAdapter1 -> IDXGIFactory1
+
+	//ID3D11Device->IDXGIDevice1
+	if (FAILED(graphicsDevice->QueryInterface(&dxgiDevice))) {
+		return false;
+	}
+	//IDXGIDevice1->IDXGIAdapter
+	IDXGIAdapter* adapter = nullptr;
+	if (FAILED(dxgiDevice->GetAdapter(&adapter))) {
+		return false;
+	}
+	//IDXGIAdapter->IDXGIAdapter1
+	if (FAILED(adapter->QueryInterface(&dxgiAdapter))) {
+		return false;
+	}
+	adapter->Release();
+	//IDXGIAdapter1->IDXGIFactory1
+	if (FAILED(dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory)))) {
+		return false;
+	}
+
 	// 作成するスワップチェーンについての情報を格納
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-	swapChainDesc.BufferDesc.Width = ScreenWidth;
-	swapChainDesc.BufferDesc.Height = ScreenHeight;
+	swapChainDesc.BufferDesc.Width = window->GetWidth();
+	swapChainDesc.BufferDesc.Height = window->GetHeight();
 	swapChainDesc.BufferDesc.RefreshRate = { 60, 1 };
 	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc = { 1, 0 };
@@ -115,16 +65,15 @@ bool Game::InitGraphicsDevice()
 		DXGI_USAGE_RENDER_TARGET_OUTPUT |
 		DXGI_USAGE_SHADER_INPUT;	// シェーダーリソースとして使用することを設定
 	swapChainDesc.BufferCount = 2;
-	swapChainDesc.OutputWindow = hWnd;
+	swapChainDesc.OutputWindow = window->GetHandle();
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 	swapChainDesc.Windowed = TRUE;
 
-	// デバイス、デバイスコンテキスト、スワップチェーンを作成
-	hr = D3D11CreateDeviceAndSwapChain(
-		NULL, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, NULL, 0, D3D11_SDK_VERSION, &swapChainDesc,
-		&swapChain, &graphicsDevice, &featureLevel, &immediateContext);
+	// 画面サイズを変える際にスワップチェーンだけ変更する必要があるため
+	//スワップチェーンを作成
+	hr = dxgiFactory->CreateSwapChain(graphicsDevice, &swapChainDesc, &swapChain);
 	if (FAILED(hr)) {
-		return 0;
+		return false;
 	}
 
 	// バックバッファーを取得
@@ -132,13 +81,13 @@ bool Game::InitGraphicsDevice()
 	hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
 	//失敗したら処理しない
 	if (FAILED(hr)) {
-		return 0;
+		return false;
 	}
 	// バックバッファーにアクセスするためのレンダーターゲット ビューを作成
 	hr = graphicsDevice->CreateRenderTargetView(backBuffer, NULL, &renderTargetViews[0]);
 	//失敗したら処理しない
 	if (FAILED(hr)) {
-		return 0;
+		return false;
 	}
 	// バックバッファーにシェーダーからアクセスするためのリソース ビューを作成
 	hr = graphicsDevice->CreateShaderResourceView(
@@ -147,7 +96,7 @@ bool Game::InitGraphicsDevice()
 		&renderTargetResourceView);
 	//失敗したら処理しない
 	if (FAILED(hr)) {
-		return 0;
+		return false;
 	}
 	SAFE_RELEASE(backBuffer);
 
@@ -232,8 +181,8 @@ bool Game::InitGraphicsDevice()
 	SAFE_RELEASE(depthStencil);
 
 	// ビューポートを指定
-	viewports[0].Width = static_cast<FLOAT>(ScreenWidth);
-	viewports[0].Height = static_cast<FLOAT>(ScreenHeight);
+	viewports[0].Width = static_cast<FLOAT>(window->GetWidth());
+	viewports[0].Height = static_cast<FLOAT>(window->GetHeight());
 	viewports[0].MinDepth = 0.0f;
 	viewports[0].MaxDepth = 1.0f;
 	viewports[0].TopLeftX = 0.0f;
@@ -252,20 +201,30 @@ void Game::ReleaseGraphicsDevice()
 	SAFE_RELEASE(swapChain);
 	SAFE_RELEASE(immediateContext);
 	SAFE_RELEASE(graphicsDevice);
+	SAFE_RELEASE(dxgiDevice);
+	SAFE_RELEASE(dxgiAdapter);
+	SAFE_RELEASE(dxgiFactory);
 }
 
 // メッセージループを実行
-int Game::Run()
+int Game::Run(const WindowSettings& settings)
 {
-	// ウィンドウを作成
-	if (!InitWindow()) {
-		MessageBox(NULL, L"ウィンドウの作成に失敗しました。", L"メッセージ", MB_OK);
-		return -1;
+	try {
+		// ウィンドウを作成
+		window.reset(new MainWindow(settings));
 	}
+	catch(const std::exception& error){
+		OutputDebugStringA("ERROR: ");
+		OutputDebugStringA(error.what());
+		OutputDebugStringA("\n");
+		MessageBoxW(NULL, L"ウィンドウを作成できませんでした。", L"メッセージ", MB_OK);
+		return 0;
+	}
+
 	// グラフィックデバイスを作成
 	if (!InitGraphicsDevice()) {
-		MessageBox(NULL, L"グラフィックデバイスを初期化できませんでした。", L"メッセージ", MB_OK);
-		return -1;
+		MessageBoxW(NULL, L"グラフィックデバイスを初期化できませんでした。", L"メッセージ", MB_OK);
+		return 0;
 	}
 
 	HRESULT hr = S_OK;
@@ -528,7 +487,7 @@ int Game::Run()
 		// 視錐台の垂直方向の角度
 		constexpr auto fieldOfView = XMConvertToRadians(60);
 		// スクリーン画面のアスペクト比
-		const auto aspectRatio = ScreenWidth / static_cast<float>(ScreenHeight);
+		const auto aspectRatio = window->GetWidth() / static_cast<float>(window->GetHeight());
 		const auto nearZ = 0.3f;	// nearクリップ面
 		const auto farZ = 1000.0f;	// farクリップ面
 		// 定数バッファーを更新
@@ -594,7 +553,7 @@ int Game::Run()
 		hr = swapChain->Present(1, 0);
 		if (FAILED(hr))
 		{
-			MessageBox(hWnd,
+			MessageBox(window->GetHandle(),
 				L"グラフィックデバイスが物理的に取り外されたか、ドライバーがアップデートされました。",
 				L"エラー", MB_OK);
 			return -1;
