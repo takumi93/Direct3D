@@ -1,7 +1,7 @@
 #include "BasicShader.hlsli"
 
 // 平行光源の向き（w = 0.0f）or 点光源の位置座標（w = 1.0f）
-static const float4 lightPosition = float4(1.0f, 2.0f, -2.0f, 0.0f);
+static const float4 lightPosition = float4(1.0f, 2.0f, -2.0f, 1.0f);
 
 [maxvertexcount(3)]
 void main(
@@ -15,9 +15,11 @@ void main(
         element.position = mul(input[i].position, WorldViewProjection);
 		
 		// 法線ベクトル(ワールド空間)
-        float3 worldNormal = normalize(mul(input[i].normal, (float3x3) WorldViewProjection));
+        float3 worldNormal = normalize(mul(input[i].normal, (float3x3) World));
+        //
+        float4 worldPosition = mul(input[i].position, World);
         // ライトへのベクトル
-        float4 light = lightPosition -input[i].position * lightPosition.w;
+        float4 light = lightPosition - worldPosition * lightPosition.w;
 		// light と worldNormal を使って計算する
         float diffuse = max(dot(normalize(light.xyz), worldNormal), 0.0f);
 		
