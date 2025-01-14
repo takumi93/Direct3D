@@ -42,6 +42,41 @@ private:
 	HWND handle = NULL;
 };
 
+// グラフィックス機能を表します。
+class Graphics final
+{
+public:
+	// このクラスのインスタンスを初期化します。
+	Graphics();
+	~Graphics() = default;
+
+	// IDXGIFactory1 を取得します。
+	IDXGIFactory1* GetDXGI_Factory();
+	// ID3D11Device を取得します。
+	ID3D11Device* GetDevice();
+	// ID3D11DeviceContext を取得します。
+	ID3D11DeviceContext* GetDeviceContext();
+
+	//explicit Graphics(const Graphics&) = delete;
+	//explicit Graphics(Graphics&&) = delete;
+	//Graphics& operator=(const Graphics&) = delete;
+	//Graphics& operator=(Graphics&&) = delete;
+
+private:
+	// DXGI 1.1のファクトリー
+	Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory;
+	// DXGI 1.1のアダプター
+	Microsoft::WRL::ComPtr<IDXGIAdapter1> dxgiAdapter;
+	// DXGI 1.1のデバイス
+	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
+	// Direct3D 11のデバイス(パソコンのグラフィック機能そのもの、GPU)
+	Microsoft::WRL::ComPtr<ID3D11Device> graphicsDevice;
+	// Direct3D 11のデバイス コンテキスト
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
+	// Direct3D 11の機能レベル
+	D3D_FEATURE_LEVEL featureLevel = {};
+};
+
 // アプリケーション全体を表します。
 class Game {
 public:
@@ -55,14 +90,16 @@ public:
 private:
 	// メインウィンドウ
 	std::unique_ptr<MainWindow> window;
-
+	// グラフィック機能
+	std::unique_ptr<Graphics> graphics;
+	
 	// DXGI 1.1のファクトリー
 	Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory;
 	// DXGI 1.1のアダプター
 	Microsoft::WRL::ComPtr<IDXGIAdapter1> dxgiAdapter;
 	// DXGI 1.1のデバイス
 	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
-	// Direct3D 11のデバイス(パソコンのグラフィック機能そのもの、GPU)
+	// Direct3D 11のデバイス
 	Microsoft::WRL::ComPtr<ID3D11Device> graphicsDevice;
 	// Direct3D 11のデバイス コンテキスト
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
@@ -86,5 +123,5 @@ private:
 	D3D11_VIEWPORT viewports[1] = {};
 
 	// グラフィックデバイスを作成。Game.cpp参照
-	bool InitGraphicsDevice();
+	void InitGraphicsDevice();
 };

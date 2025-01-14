@@ -3,6 +3,7 @@
 // 
 //=============================================================================
 #include <DirectXMath.h>	// DirectXの算術ライブラリー
+#include <comdef.h>
 #include <exception>
 #include "Game.h"
 #include "BasicVertexShader.h"
@@ -13,60 +14,16 @@ using namespace DirectX;
 using namespace Microsoft::WRL;
 
 // グラフィックデバイスを作成します。
-bool Game::InitGraphicsDevice()
+void Game::InitGraphicsDevice()
 {
 	// 関数の実行結果を受け取る変数
 	HRESULT hr = S_OK;
 
-	ComPtr<IDXGIFactory1> dxgiFactory;
-	ComPtr<IDXGIAdapter1> dxgiAdapter;
-	ComPtr<IDXGIDevice1> dxgiDevice;
-	ComPtr<ID3D11Device> graphicsDevice;
-	ComPtr<ID3D11DeviceContext> immediateContext;
-	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL();
 	ComPtr<IDXGISwapChain> swapChain;
 	ComPtr<ID3D11RenderTargetView> renderTargetView;
 	ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
 	ComPtr<ID3D11DepthStencilView> depthStencilView;
 	ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
-
-	// デバイス作成時のオプションフラグ
-	UINT creationFlags = 0;
-#if defined(_DEBUG)
-	// DEBUGビルドの際にDirect3Dのデバッグ表示機能を持たせる
-	creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-	// デバイス、デバイスコンテキストを作成
-	hr = D3D11CreateDevice(
-		NULL, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, NULL, 0, D3D11_SDK_VERSION,
-		&graphicsDevice, &featureLevel, &immediateContext);
-	if (FAILED(hr)) {
-		return 0;
-	}
-
-	// Direct3D 11デバイスからDXGIインターフェイスを順に変換し取得（取得できない場合エラー）
-	// ID3D11Device -> IDXGIDevice1 -> IDXGIAdapter -> IDXGIAdapter1 -> IDXGIFactory1
-
-	//ID3D11Device->IDXGIDevice1
-	if (FAILED(graphicsDevice.As(&dxgiDevice))) {
-		return false;
-	}
-	{
-		//IDXGIDevice1->IDXGIAdapter
-		ComPtr<IDXGIAdapter> adapter;
-		if (FAILED(dxgiDevice->GetAdapter(&adapter))) {
-			return false;
-		}
-		//IDXGIAdapter->IDXGIAdapter1
-		if (FAILED(adapter.As(&dxgiAdapter))) {
-			return false;
-		}
-	}
-	//IDXGIAdapter1->IDXGIFactory1
-	if (FAILED(dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory)))) {
-		return false;
-	}
 
 	// 作成するスワップチェーンについての情報を格納
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
@@ -85,9 +42,9 @@ bool Game::InitGraphicsDevice()
 
 	// 画面サイズを変える際にスワップチェーンだけ変更する必要があるため
 	//スワップチェーンを作成
-	hr = dxgiFactory->CreateSwapChain(graphicsDevice.Get(), &swapChainDesc, &swapChain);
+	hr = graphics->GetDXGI_Factory()->CreateSwapChain(graphics->GetDevice(), &swapChainDesc, &swapChain);
 	if (FAILED(hr)) {
-		return false;
+		throw _com_error(hr);
 	}
 
 	// バックバッファーを取得
@@ -96,19 +53,19 @@ bool Game::InitGraphicsDevice()
 		hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
 		//失敗したら処理しない
 		if (FAILED(hr)) {
-			return false;
+			throw _com_error(hr);
 		}
 		// バックバッファーにアクセスするためのレンダーターゲット ビューを作成
-		hr = graphicsDevice->CreateRenderTargetView(backBuffer.Get(), NULL, &renderTargetView);
+		hr = graphics->GetDevice()->CreateRenderTargetView(backBuffer.Get(), NULL, &renderTargetView);
 		//失敗したら処理しない
 		if (FAILED(hr)) {
-			return false;
+			throw _com_error(hr);
 		}
 		// バックバッファーにシェーダーからアクセスするためのリソース ビューを作成
-		hr = graphicsDevice->CreateShaderResourceView(backBuffer.Get(), NULL, &renderTargetResourceView);
+		hr = graphics->GetDevice()->CreateShaderResourceView(backBuffer.Get(), NULL, &renderTargetResourceView);
 		//失敗したら処理しない
 		if (FAILED(hr)) {
-			return false;
+			throw _com_error(hr);
 		}
 	}
 
@@ -149,10 +106,10 @@ bool Game::InitGraphicsDevice()
 		depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // シェーダーリソースとして使用することを設定
 		depthStencilDesc.CPUAccessFlags = 0;
 		depthStencilDesc.MiscFlags = 0;
-		hr = graphicsDevice->CreateTexture2D(&depthStencilDesc, NULL, &depthStencil);
+		hr = graphics->GetDevice()->CreateTexture2D(&depthStencilDesc, NULL, &depthStencil);
 		//失敗したら処理しない
 		if (FAILED(hr)) {
-			return false;
+			throw _com_error(hr);
 		}
 		// 深度ステンシルにアクセスするためのビューを作成
 		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
@@ -165,10 +122,10 @@ bool Game::InitGraphicsDevice()
 			depthStencilViewDesc.Texture2D.MipSlice = 0;
 		}
 		depthStencilViewDesc.Texture2D.MipSlice = 0;
-		hr = graphicsDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &depthStencilView);
+		hr = graphics->GetDevice()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &depthStencilView);
 		//失敗したら処理しない
 		if (FAILED(hr)) {
-			return false;
+			throw _com_error(hr);
 		}
 		// 深度ステンシルにシェーダーからアクセスするためのリソース ビューを作成
 		D3D11_SHADER_RESOURCE_VIEW_DESC depthStencilResourceViewDesc = {};
@@ -181,10 +138,10 @@ bool Game::InitGraphicsDevice()
 			depthStencilResourceViewDesc.Texture2D.MostDetailedMip = 0;
 			depthStencilResourceViewDesc.Texture2D.MipLevels = 1;
 		}
-		hr = graphicsDevice->CreateShaderResourceView(depthStencil.Get(), &depthStencilResourceViewDesc, &depthStencilResourceView);
+		hr = graphics->GetDevice()->CreateShaderResourceView(depthStencil.Get(), &depthStencilResourceViewDesc, &depthStencilResourceView);
 		//失敗したら処理しない
 		if (FAILED(hr)) {
-			return false;
+			throw _com_error(hr);
 		}
 	}
 
@@ -197,19 +154,11 @@ bool Game::InitGraphicsDevice()
 	viewports[0].TopLeftY = 0.0f;
 
 	// 初期化がすべて成功したらメンバー変数を更新する
-	this->dxgiFactory = dxgiFactory;
-	this->dxgiAdapter = dxgiAdapter;
-	this->dxgiDevice = dxgiDevice;
-	this->graphicsDevice = graphicsDevice;
-	this->immediateContext = immediateContext;
-	this->featureLevel = featureLevel;
 	this->swapChain = swapChain;
 	this->renderTargetView = renderTargetView;
 	this->renderTargetResourceView = renderTargetResourceView;
 	this->depthStencilView = depthStencilView;
 	this->depthStencilResourceView = depthStencilResourceView;
-
-	return true;
 }
 
 // メッセージループを実行
@@ -218,6 +167,9 @@ int Game::Run(const WindowSettings& settings)
 	try {
 		// ウィンドウを作成
 		window.reset(new MainWindow(settings));
+		// グラフィックデバイスを作成
+		graphics.reset(new Graphics());
+		InitGraphicsDevice();
 	}
 	catch(const std::exception& error){
 		OutputDebugStringA("ERROR: ");
@@ -226,14 +178,17 @@ int Game::Run(const WindowSettings& settings)
 		MessageBoxW(NULL, L"ウィンドウを作成できませんでした。", L"メッセージ", MB_OK);
 		return 0;
 	}
-
-	// グラフィックデバイスを作成
-	if (!InitGraphicsDevice()) {
-		MessageBoxW(NULL, L"グラフィックデバイスを初期化できませんでした。", L"メッセージ", MB_OK);
+	catch (const _com_error& error) {
+		OutputDebugString(TEXT("ERROR: "));
+		OutputDebugString(error.ErrorMessage());
+		OutputDebugString(TEXT("\n"));
+		MessageBoxW(NULL, TEXT("グラフィックデバイスを初期化できませんでした。"), TEXT("エラー"), MB_OK);
 		return 0;
 	}
 
 	HRESULT hr = S_OK;
+	const auto graphicsDevice = graphics->GetDevice();
+	const auto immediateContext = graphics->GetDeviceContext();
 
 	// 一つの頂点に含まれるデータの型
 	struct VertexPositionColor
