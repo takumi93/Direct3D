@@ -266,6 +266,7 @@ int Game::Run(const WindowSettings& settings)
 		float zAngle = 0.0f;
 
 		// フレーム更新処理
+		// オブジェクトのy軸回転
 		if (GetAsyncKeyState(VK_SPACE)) {
 			XMStoreFloat4(
 				&rotation,
@@ -273,7 +274,7 @@ int Game::Run(const WindowSettings& settings)
 		}
 		XMStoreFloat4(
 			&rotation,
-			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(1.0f), 0)));
+			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(0.5f), 0)));
 		
 		// 定数バッファーを更新
 		// Scaling × Rotation × TranslationをCPU側で計算してシェーダーへ送る(シェーダーでやるより処理が軽いため)
