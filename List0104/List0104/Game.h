@@ -57,11 +57,6 @@ public:
 	// ID3D11DeviceContext を取得します。
 	ID3D11DeviceContext* GetDeviceContext();
 
-	//explicit Graphics(const Graphics&) = delete;
-	//explicit Graphics(Graphics&&) = delete;
-	//Graphics& operator=(const Graphics&) = delete;
-	//Graphics& operator=(Graphics&&) = delete;
-
 private:
 	// DXGI 1.1のファクトリー
 	Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory;
@@ -77,51 +72,59 @@ private:
 	D3D_FEATURE_LEVEL featureLevel = {};
 };
 
-// アプリケーション全体を表します。
-class Game {
+class SwapChain final
+{
 public:
-	//// このクラスのインスタンスを初期化します。
-	//Game() noexcept = default;
-	//virtual ~Game() = default;
+	// このクラスのインスタンスを初期化します。
+	SwapChain(
+		std::shared_ptr<Graphics> graphics,
+		std::shared_ptr<MainWindow> window,
+		DXGI_FORMAT swapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT
+	);
+	~SwapChain() = default;
 
-	// メッセージループを実行します。
-	int Run(const WindowSettings& settings = WindowSettings()) ;
+	// ID3D11RenderTargetView を取得します。
+	ID3D11RenderTargetView* GetRenderTargetView();
+	// ID3D11DepthStencilView を取得します。
+	ID3D11DepthStencilView* GetDepthStencilView();
+
+	// バックバッファーに描画したイメージをディスプレイに表示します。
+	void Present(UINT syncInterval);
 
 private:
-	// メインウィンドウ
-	std::unique_ptr<MainWindow> window;
-	// グラフィック機能
-	std::unique_ptr<Graphics> graphics;
-	
-	// DXGI 1.1のファクトリー
-	Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory;
-	// DXGI 1.1のアダプター
-	Microsoft::WRL::ComPtr<IDXGIAdapter1> dxgiAdapter;
-	// DXGI 1.1のデバイス
-	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
-	// Direct3D 11のデバイス
-	Microsoft::WRL::ComPtr<ID3D11Device> graphicsDevice;
-	// Direct3D 11のデバイス コンテキスト
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
-	// Direct3D 11の機能レベル
-	D3D_FEATURE_LEVEL featureLevel = {};
-	// スワップチェーン
+	// このオブジェクトを作成したグラフィックス機能
+	std::shared_ptr<Graphics> graphics;
+	// このオブジェクトを作成したウィンドウ
+	std::shared_ptr<MainWindow> window;
+	// スワップ チェーン
 	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
 	// レンダーターゲット
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
 	// バックバッファーをシェーダーで利用するためのリソース ビュー
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
-	// 深度ステンシルのフォーマット
-	const DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	// 深度ステンシル
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
 	// 深度ステンシルをシェーダーで利用するためのリソース ビュー
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
+};
+
+// アプリケーション全体を表します。
+class Game {
+public:
+	// メッセージループを実行します。
+	int Run(const WindowSettings& settings = WindowSettings()) ;
+
+private:
+	// メインウィンドウ
+	std::shared_ptr<MainWindow> window;
+	// グラフィックス機能
+	std::shared_ptr<Graphics> graphics;
+	// スワップ チェーン
+	std::unique_ptr<SwapChain> swapChain;
+	
 	// 画面クリアーに使用するカラー
 	FLOAT clearColor[4] = { 53 / 255.0f, 70 / 255.0f, 166 / 255.0f, 1.0f };
 	// ビューポート
 	D3D11_VIEWPORT viewports[1] = {};
-
-	// グラフィックデバイスを作成。Game.cpp参照
-	void InitGraphicsDevice();
 };

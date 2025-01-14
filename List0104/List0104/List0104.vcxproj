@@ -135,6 +135,7 @@
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Program.cpp" />
+    <ClCompile Include="SwapChain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h" />
