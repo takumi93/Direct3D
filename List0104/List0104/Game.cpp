@@ -57,43 +57,45 @@ int Game::Run(const WindowSettings& settings)
 		DirectX::XMFLOAT3 position;	// 位置座標
 		DirectX::XMFLOAT4 color;	// 頂点カラー
 	};
+	// 一つの頂点に含まれるデータの型
+	struct VertexPositionNormal
+	{
+		DirectX::XMFLOAT3 position;	// 位置座標, POSITION
+		DirectX::XMFLOAT3 normal;	// 法線ベクトル, NORMAL
+	};
+
 	// 頂点データの配列
-	constexpr VertexPositionColor vertices[] = {
+	constexpr VertexPositionNormal vertices[] = {
 		// Top
-		{ { -0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		{ {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		{ { -0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-		{ {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-
-		// Buttom
-		{ {  0.5f,  -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		{ { -0.5f,  -0.5f,  0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		{ {  0.5f,  -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-		{ { -0.5f,  -0.5f, -0.5f }, { 0.0f, 0.0f, 0.0f, 1.0f } },
-
+		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ { 0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ {-0.5f, 0.5f,-0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ { 0.5f, 0.5f,-0.5f }, { 0.0f, 1.0f, 0.0f } },
+		// Bottom
+		{ { 0.5f,-0.5f, 0.5f }, { 0.0f,-1.0f, 0.0f } },
+		{ {-0.5f,-0.5f, 0.5f }, { 0.0f,-1.0f, 0.0f } },
+		{ { 0.5f,-0.5f,-0.5f }, { 0.0f,-1.0f, 0.0f } },
+		{ {-0.5f,-0.5f,-0.5f }, { 0.0f,-1.0f, 0.0f } },
 		// Front
-		{ {  0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-		{ { -0.5f,  0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-		{ {  0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-		{ { -0.5f, -0.5f, 0.5f }, { 0.25f, 0.25f, 0.25f, 1.0f } },
-
+		{ { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+		{ { 0.5f,-0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+		{ {-0.5f,-0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
 		// Back
-		{ { -0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-		{ {  0.5f,  0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-		{ { -0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-		{ {  0.5f, -0.5f, -0.5f }, { 0.75f, 0.75f, 0.75f, 1.0f } },
-
+		{ {-0.5f, 0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
+		{ { 0.5f, 0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
+		{ {-0.5f,-0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
+		{ { 0.5f,-0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
 		// Left
-		{ { -0.5f,  0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-		{ { -0.5f,  0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-		{ { -0.5f, -0.5f,  0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-		{ { -0.5f, -0.5f, -0.5f }, { 0.15f, 0.15f, 0.15f, 1.0f } },
-
+		{ {-0.5f, 0.5f, 0.5f }, {-1.0f, 0.0f, 0.0f } },
+		{ {-0.5f, 0.5f,-0.5f }, {-1.0f, 0.0f, 0.0f } },
+		{ {-0.5f,-0.5f, 0.5f }, {-1.0f, 0.0f, 0.0f } },
+		{ {-0.5f,-0.5f,-0.5f }, {-1.0f, 0.0f, 0.0f } },
 		// Right
-		{ {  0.5f,  0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
-		{ {  0.5f,  0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
-		{ {  0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
-		{ {  0.5f, -0.5f,  0.5f }, { 0.5f, 0.5f, 0.5f, 1.0f } },
+		{ { 0.5f, 0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f,-0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f,-0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
 	};
 
 	constexpr UINT32 indices[] = {
@@ -217,9 +219,13 @@ int Game::Run(const WindowSettings& settings)
 		OutputDebugString(L"ピクセルシェーダーを作成できませんでした。");
 	}
 
+	//D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,							   0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//};
 	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,							   0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	// 入力レイアウトを作成
@@ -336,7 +342,7 @@ int Game::Run(const WindowSettings& settings)
 
 		// 頂点バッファーを設定
 		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer.Get()};
-		UINT strides[1] = { sizeof(VertexPositionColor) };
+		UINT strides[1] = { sizeof(VertexPositionNormal) };
 		UINT offsets[1] = { 0 };
 		immediateContext->IASetVertexBuffers(
 			0,

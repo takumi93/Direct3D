@@ -5,6 +5,6 @@ VSOutput main(VSInput input)
 {
     VSOutput output;
     output.position = input.position;
-    output.color = input.color;
+    output.normal = input.normal;
     return output;
 }

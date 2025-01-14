@@ -12,14 +12,14 @@ cbuffer ConstantBufferPerFrame
 struct VSInput
 {
     float4 position : POSITION;
-    float4 color : COLOR0;
+    float3 normal : NORMAL;
 };
 
 // 頂点シェーダーの出力データ
 struct VSOutput
 {
     float4 position : SV_POSITION;
-    float4 color : COLOR0;
+    float3 normal : NORMAL;
 };
 
 // ジオメトリーシェーダーの入力データ
