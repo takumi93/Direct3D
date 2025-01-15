@@ -6,6 +6,7 @@ cbuffer ConstantBufferPerFrame
     float4x4 Projection;
     float4x4 WorldViewProjection;
     float4 MaterialColor;
+    float4 LightPosition;
 };
 
 // 頂点シェーダーの入力データ

@@ -150,11 +150,12 @@ int Game::Run(const WindowSettings& settings)
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
 	struct ConstantBufferPerFrame
 	{
-		DirectX::XMFLOAT4X4 worldMatrix;	// ワールド変換行列(スケール回転移動を統合)
-		DirectX::XMFLOAT4X4 viewMatrix;		// ビュー変換行列
+		DirectX::XMFLOAT4X4 worldMatrix;		// ワールド変換行列(スケール回転移動を統合)
+		DirectX::XMFLOAT4X4 viewMatrix;			// ビュー変換行列
 		DirectX::XMFLOAT4X4 projectionMatrix;	// プロジェクション変換行列
-		DirectX::XMFLOAT4X4 wvpMatrix;	// ワールド×ビュー×プロジェクション変換行列
-		DirectX::XMFLOAT4 materialColor;	// カラー
+		DirectX::XMFLOAT4X4 wvpMatrix;			// ワールド×ビュー×プロジェクション変換行列
+		DirectX::XMFLOAT4 materialColor;		// カラー
+		DirectX::XMFLOAT4 lightPosition;		// ライト位置
 	};
 	ConstantBufferPerFrame constantBufferPerFrame = {};
 	// 定数バッファーを作成
@@ -181,10 +182,9 @@ int Game::Run(const WindowSettings& settings)
 	XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&constantBufferPerFrame.projectionMatrix, XMMatrixIdentity());
 	XMStoreFloat4x4(&constantBufferPerFrame.wvpMatrix, XMMatrixIdentity());
-
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
+	constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
 	immediateContext->UpdateSubresource(constantBuffer.Get(), 0, NULL, &constantBufferPerFrame, 0, 0);
-
 
 	// 頂点シェーダーの作成
 	ComPtr<ID3D11VertexShader> vertexShader;
@@ -255,6 +255,10 @@ int Game::Run(const WindowSettings& settings)
 	XMFLOAT4 cameraRotation = {};
 	XMStoreFloat4(&cameraRotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(15.0f), 0, 0));
 
+	// ライトの位置座標
+	// 平行光源(w = 0.0f) or 点光源(w = 1.0f)
+	XMFLOAT4 lightPosition = { 1, 2, -2, 0 };
+
 	float time = 0;
 
 	// メッセージループを実行
@@ -266,12 +270,16 @@ int Game::Run(const WindowSettings& settings)
 		float zAngle = 0.0f;
 
 		// フレーム更新処理
-		// オブジェクトのy軸回転
+		// 点光源
 		if (GetAsyncKeyState(VK_SPACE)) {
-			XMStoreFloat4(
-				&rotation,
-				XMQuaternionRotationRollPitchYaw(0, 0, 0));
+			lightPosition.w = 1;
 		}
+		// 平行光源
+		else {
+			lightPosition.w = 0;
+		}
+
+		// オブジェクトのy軸回転
 		XMStoreFloat4(
 			&rotation,
 			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(0.5f), 0)));
@@ -282,10 +290,13 @@ int Game::Run(const WindowSettings& settings)
 			XMMatrixScalingFromVector(XMLoadFloat3(&scale)) *
 			XMMatrixRotationQuaternion(XMLoadFloat4(&rotation)) *
 			XMMatrixTranslationFromVector(XMLoadFloat3(&position));
-
 		XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixTranspose(worldMatrix));
 
+		// マテリアルの色を更新
 		constantBufferPerFrame.materialColor = XMFLOAT4(1, 230 / 255.0f, 0, 1);
+
+		// ライトのパラメーター
+		constantBufferPerFrame.lightPosition = lightPosition;
 
 		// カメラの前方ベクトル
 		const auto eyeDirection =
