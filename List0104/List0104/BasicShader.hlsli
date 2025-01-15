@@ -28,8 +28,9 @@ typedef VSOutput GSInput;
 // ジオメトリーシェーダーの出力データ
 struct GSOutput
 {
-    float4 position : SV_POSITION;
-    float4 color : COLOR0;
+    float4 position : SV_POSITION;      // WVP変換
+    float4 worldPosition : POSITION;    // 法線ベクトル(ワールド空間)
+    float3 worldNormal : NORMAL;        // 位置座標（ワールド空間）
 };
 
 // ピクセルシェーダーの入力データ(ピクセルシェーダと頂点シェーダの型が一緒のため)
