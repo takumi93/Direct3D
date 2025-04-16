@@ -5,9 +5,10 @@
 #pragma once
 
 #include <Windows.h>
-#include <string>
 #include <memory>
+#include <string>
 #include <d3d11.h>
+#include <DirectXMath.h>
 #include <wrl/client.h>
 
 struct WindowSettings
@@ -20,7 +21,9 @@ struct WindowSettings
 	int screenHeight = 480;
 };
 
-class MainWindow {
+// メイン ウィンドウを表します。
+class MainWindow
+{
 public:
 	// このクラスのインスタンスを初期化します。
 	MainWindow(const WindowSettings& settings = WindowSettings());
@@ -34,8 +37,8 @@ public:
 	HWND GetHandle() const;
 
 private:
-	// 関数のプロトタイプ宣言
-	static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	// このウィンドウのメッセージを処理します。
+	static LRESULT CALLBACK WindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
 
 	WindowSettings settings;
 	// ウィンドウのハンドル
@@ -64,7 +67,7 @@ private:
 	Microsoft::WRL::ComPtr<IDXGIAdapter1> dxgiAdapter;
 	// DXGI 1.1のデバイス
 	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
-	// Direct3D 11のデバイス(パソコンのグラフィック機能そのもの、GPU)
+	// Direct3D 11のデバイス
 	Microsoft::WRL::ComPtr<ID3D11Device> graphicsDevice;
 	// Direct3D 11のデバイス コンテキスト
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
@@ -72,16 +75,171 @@ private:
 	D3D_FEATURE_LEVEL featureLevel = {};
 };
 
+// 位置座標のみを頂点情報に持つデータを表します。
+struct VertexPosition
+{
+	DirectX::XMFLOAT3 position;	// 位置座標
+
+	// この頂点情報をD3D11_INPUT_ELEMENT_DESCで表した配列を取得します。
+	static constexpr D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+};
+
+// 位置座標とカラーを頂点情報に持つデータを表します。
+struct VertexPositionColor
+{
+	DirectX::XMFLOAT3 position;	// 位置座標
+	DirectX::XMFLOAT4 color;	// 頂点カラー
+
+	// この頂点情報をD3D11_INPUT_ELEMENT_DESCで表した配列を取得します。
+	static constexpr D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
+		{ "POSITION", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+};
+
+// 位置座標と法線ベクトルを頂点情報に持つデータを表します。
+struct VertexPositionNormal
+{
+	DirectX::XMFLOAT3 position;	// 位置座標
+	DirectX::XMFLOAT3 normal;	// 法線ベクトル
+
+	// この頂点情報をD3D11_INPUT_ELEMENT_DESCで表した配列を取得します。
+	static constexpr D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+};
+
+// 頂点バッファーを表します。
+class VertexBuffer
+{
+public:
+	// このクラスの新しいインスタンスを初期化します。
+	VertexBuffer(std::shared_ptr<Graphics> graphics, size_t byteWidth);
+	~VertexBuffer() = default;
+
+	// バッファーにデータを設定します。
+	void SetData(const void* data);
+
+	// D3D11のネイティブポインターを取得します。
+	ID3D11Buffer* GetNativePointer();
+
+private:
+	std::shared_ptr<Graphics> graphics;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+};
+
+// インデックスバッファーを表します。
+class IndexBuffer
+{
+public:
+	// このクラスの新しいインスタンスを初期化します。
+	IndexBuffer(std::shared_ptr<Graphics> graphics, size_t byteWidth);
+	~IndexBuffer() = default;
+
+	// バッファーにデータを設定します。
+	void SetData(const void* data);
+
+	// D3D11のネイティブポインターを取得します。
+	ID3D11Buffer* GetNativePointer();
+
+private:
+	std::shared_ptr<Graphics> graphics;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+};
+
+// 定数バッファーを表します。
+class ConstantBuffer
+{
+public:
+	// このクラスの新しいインスタンスを初期化します。
+	ConstantBuffer(std::shared_ptr<Graphics> graphics, size_t byteWidth);
+	~ConstantBuffer() = default;
+
+	// バッファーにデータを設定します。
+	void SetData(const void* data);
+
+	// D3D11のネイティブポインターを取得します。
+	ID3D11Buffer* GetNativePointer();
+
+private:
+	std::shared_ptr<Graphics> graphics;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+};
+
+// 頂点シェーダーを表します。
+class BasicVertexShader
+{
+public:
+	// このクラスの新しいインスタンスを初期化します。
+	BasicVertexShader(std::shared_ptr<Graphics> graphics);
+	~BasicVertexShader() = default;
+
+	// このシェーダーのバイトコードを取得します。
+	const BYTE* GetBytecode();
+	// バイトコードのサイズを取得します。
+	size_t GetBytecodeLength();
+
+	// D3D11のネイティブポインターを取得します。
+	ID3D11VertexShader* GetNativePointer();
+
+private:
+	std::shared_ptr<Graphics> graphics;
+	Microsoft::WRL::ComPtr<ID3D11VertexShader> shader;
+};
+
+// ジオメトリーシェーダーを表します。
+class BasicGeometryShader
+{
+public:
+	// このクラスの新しいインスタンスを初期化します。
+	BasicGeometryShader(std::shared_ptr<Graphics> graphics);
+	~BasicGeometryShader() = default;
+
+	// このシェーダーのバイトコードを取得します。
+	const BYTE* GetBytecode();
+	// バイトコードのサイズを取得します。
+	size_t GetBytecodeLength();
+
+	// D3D11のネイティブポインターを取得します。
+	ID3D11GeometryShader* GetNativePointer();
+
+private:
+	std::shared_ptr<Graphics> graphics;
+	Microsoft::WRL::ComPtr<ID3D11GeometryShader> shader;
+};
+
+// ピクセルシェーダーを表します。
+class BasicPixelShader
+{
+public:
+	// このクラスの新しいインスタンスを初期化します。
+	BasicPixelShader(std::shared_ptr<Graphics> graphics);
+	~BasicPixelShader() = default;
+
+	// このシェーダーのバイトコードを取得します。
+	const BYTE* GetBytecode();
+	// バイトコードのサイズを取得します。
+	size_t GetBytecodeLength();
+
+	// D3D11のネイティブポインターを取得します。
+	ID3D11PixelShader* GetNativePointer();
+
+private:
+	std::shared_ptr<Graphics> graphics;
+	Microsoft::WRL::ComPtr<ID3D11PixelShader> shader;
+};
+
+// スワップ チェーンを管理してレンダーターゲットの機能を提供するクラスを表します。
 class SwapChain final
 {
 public:
 	// このクラスのインスタンスを初期化します。
-	SwapChain(
-		std::shared_ptr<Graphics> graphics,
-		std::shared_ptr<MainWindow> window,
+	SwapChain(std::shared_ptr<Graphics> graphics, std::shared_ptr<MainWindow> window,
 		DXGI_FORMAT swapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM,
-		DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT
-	);
+		DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 	~SwapChain() = default;
 
 	// ID3D11RenderTargetView を取得します。
@@ -93,36 +251,31 @@ public:
 	void Present(UINT syncInterval);
 
 private:
-	// このオブジェクトを作成したグラフィックス機能
 	std::shared_ptr<Graphics> graphics;
-	// このオブジェクトを作成したウィンドウ
 	std::shared_ptr<MainWindow> window;
-	// スワップ チェーン
+
 	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
-	// レンダーターゲット
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
-	// バックバッファーをシェーダーで利用するためのリソース ビュー
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
-	// 深度ステンシル
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
-	// 深度ステンシルをシェーダーで利用するためのリソース ビュー
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
 };
 
 // アプリケーション全体を表します。
-class Game {
+class Game
+{
 public:
 	// メッセージループを実行します。
-	int Run(const WindowSettings& settings = WindowSettings()) ;
+	int Run(const WindowSettings& settings = WindowSettings());
 
 private:
 	// メインウィンドウ
 	std::shared_ptr<MainWindow> window;
 	// グラフィックス機能
 	std::shared_ptr<Graphics> graphics;
-	// スワップ チェーン
+	// スワップチェーン
 	std::unique_ptr<SwapChain> swapChain;
-	
+
 	// 画面クリアーに使用するカラー
 	FLOAT clearColor[4] = { 53 / 255.0f, 70 / 255.0f, 166 / 255.0f, 1.0f };
 	// ビューポート

@@ -6,9 +6,6 @@
 #include <comdef.h>
 #include <exception>
 #include "Game.h"
-#include "BasicVertexShader.h"
-#include "BasicGeometryShader.h"
-#include "BasicPixelShader.h"
 
 using namespace DirectX;
 using namespace Microsoft::WRL;
@@ -21,7 +18,7 @@ int Game::Run(const WindowSettings& settings)
 		window = std::make_shared<MainWindow>(settings);
 		// グラフィックデバイスを作成
 		graphics = std::make_shared<Graphics>();
-		//InitGraphicsDevice();
+		// スワップチェーンを作成
 		swapChain.reset(new SwapChain(graphics, window));
 
 		// ビューポート
@@ -51,20 +48,8 @@ int Game::Run(const WindowSettings& settings)
 	const auto graphicsDevice = graphics->GetDevice();
 	const auto immediateContext = graphics->GetDeviceContext();
 
-	// 一つの頂点に含まれるデータの型
-	struct VertexPositionColor
-	{
-		DirectX::XMFLOAT3 position;	// 位置座標
-		DirectX::XMFLOAT4 color;	// 頂点カラー
-	};
-	// 一つの頂点に含まれるデータの型
-	struct VertexPositionNormal
-	{
-		DirectX::XMFLOAT3 position;	// 位置座標, POSITION
-		DirectX::XMFLOAT3 normal;	// 法線ベクトル, NORMAL
-	};
-
 	// 頂点データの配列
+	// 配列の左は座標で右は頂点の向きを指定
 	constexpr VertexPositionNormal vertices[] = {
 		// Top
 		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
@@ -97,7 +82,7 @@ int Game::Run(const WindowSettings& settings)
 		{ { 0.5f,-0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f } },
 		{ { 0.5f,-0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
 	};
-
+	// インデックスデータの配列
 	constexpr UINT32 indices[] = {
 		0, 1, 2, 3, 2, 1,
 		4, 5, 6, 7, 6, 5,
@@ -108,44 +93,28 @@ int Game::Run(const WindowSettings& settings)
 	};
 	constexpr UINT indexCount = _countof(indices);
 	
-	
-	// 頂点バッファーを作成
-	ComPtr<ID3D11Buffer> vertexBuffer;
-	D3D11_BUFFER_DESC bufferDesc = {};
-	bufferDesc.ByteWidth = sizeof vertices;	// 作成するバッファーのサイズ(bytes) x:4bytes,y:4bytes,z:4bytes total 12bytes
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;	// バッファーの使用方法
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;	// Vertex Bufferとして利用する
-	bufferDesc.CPUAccessFlags = 0;			// CPUからの読み書きに使わない場合は0
-	bufferDesc.MiscFlags = 0;				// オプションのフラグ
-	bufferDesc.StructureByteStride = 0;		// 頂点バッファーとして使うなら0
-	hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &vertexBuffer);
-	if (FAILED(hr) || vertexBuffer == nullptr) {
-		OutputDebugString(L"頂点バッファーを作成できませんでした。");
-		return -1;
-	}
-	// バッファーにデータを転送
-	immediateContext->UpdateSubresource(vertexBuffer.Get(), 0, NULL, vertices, 0, 0);
+	// バッファー
+	std::shared_ptr<VertexBuffer> vertexBuffer;
+	// インデックスバッファー
+	std::shared_ptr<IndexBuffer> indexBuffer;
 
-	// インデックスバッファーを作成
-	ComPtr<ID3D11Buffer> indexBuffer;
-	{
-		// 作成するインデックスバッファーについての記述
-		D3D11_BUFFER_DESC bufferDesc = {};
-		bufferDesc.ByteWidth = sizeof indices;
-		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		bufferDesc.CPUAccessFlags = 0;
-		bufferDesc.MiscFlags = 0;
-		bufferDesc.StructureByteStride = 0;
-		// バッファーを作成
-		hr = graphicsDevice->CreateBuffer(&bufferDesc, NULL, &indexBuffer);
-		if (FAILED(hr) || indexBuffer == nullptr) {
-			OutputDebugString(L"インデックスバッファーを作成できませんでした。");
-			return -1;
-		}
-		// バッファーにデータを転送
-		immediateContext->UpdateSubresource(indexBuffer.Get(), 0, NULL, indices, 0, 0);
+	try {
+		// 頂点バッファーを作成
+		vertexBuffer = std::make_shared<VertexBuffer>(graphics, sizeof vertices);
+		// インデックスバッファーを作成
+		indexBuffer = std::make_shared<IndexBuffer>(graphics, sizeof vertices);
 	}
+	catch (const _com_error& error) {
+		OutputDebugString(TEXT("ERROR: "));
+		OutputDebugString(error.ErrorMessage());
+		OutputDebugString(TEXT("\n"));
+		MessageBox(NULL, TEXT("バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
+		return 0;
+	}
+
+	// バッファーにデータを転送
+	vertexBuffer->SetData(vertices);
+	indexBuffer->SetData(indices);
 
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
 	struct ConstantBufferPerFrame
@@ -157,24 +126,20 @@ int Game::Run(const WindowSettings& settings)
 		DirectX::XMFLOAT4 materialColor;		// カラー
 		DirectX::XMFLOAT4 lightPosition;		// ライト位置
 	};
+	
 	ConstantBufferPerFrame constantBufferPerFrame = {};
 	// 定数バッファーを作成
-	ComPtr<ID3D11Buffer> constantBuffer;
-	{
-		// 作成するバッファーについての記述
-		D3D11_BUFFER_DESC bufferDesc = { 0 };
-		bufferDesc.ByteWidth = sizeof(ConstantBufferPerFrame);	// 作成するバッファーのサイズ(bytes)
-		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;		// Constant Bufferとして利用する
-		bufferDesc.CPUAccessFlags = 0;
-		bufferDesc.MiscFlags = 0;
-		bufferDesc.StructureByteStride = 0;
-		// バッファーを作成
-		auto hr = graphicsDevice->CreateBuffer(&bufferDesc, nullptr, &constantBuffer);
-		if (FAILED(hr)) {
-			OutputDebugString(L"定数バッファーを作成できませんでした。");
-			return -1;
-		}
+	std::shared_ptr<ConstantBuffer> constantBuffer;
+	// バッファーを作成
+	try {
+		constantBuffer = std::make_shared<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
+	}
+	catch (const _com_error& error) {
+		OutputDebugString(TEXT("ERROR: "));
+		OutputDebugString(error.ErrorMessage());
+		OutputDebugString(TEXT("\n"));
+		MessageBox(NULL, TEXT("定数バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
+		return 0;
 	}
 
 	// 定数バッファーを更新
@@ -184,57 +149,33 @@ int Game::Run(const WindowSettings& settings)
 	XMStoreFloat4x4(&constantBufferPerFrame.wvpMatrix, XMMatrixIdentity());
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
 	constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
-	immediateContext->UpdateSubresource(constantBuffer.Get(), 0, NULL, &constantBufferPerFrame, 0, 0);
+	constantBuffer->SetData(&constantBufferPerFrame);
 
-	// 頂点シェーダーの作成
-	ComPtr<ID3D11VertexShader> vertexShader;
-	hr = graphicsDevice->CreateVertexShader(
-		g_BasicVertexShader,
-		ARRAYSIZE(g_BasicVertexShader),
-		NULL,
-		&vertexShader);
-	if (FAILED(hr)) {
-		OutputDebugString(L"頂点シェーダーの作成に失敗しました。");
+	// シェーダーを作成
+	std::shared_ptr<BasicVertexShader> vertexShader;
+	std::shared_ptr<BasicGeometryShader> geometryShader;
+	std::shared_ptr<BasicPixelShader> pixelShader;
+
+	try {
+		vertexShader = std::make_shared<BasicVertexShader>(graphics);
+		geometryShader = std::make_shared<BasicGeometryShader>(graphics);
+		pixelShader = std::make_shared<BasicPixelShader>(graphics);
+	}
+	catch (const _com_error& error) {
+		OutputDebugString(TEXT("ERROR: "));
+		OutputDebugString(error.ErrorMessage());
+		OutputDebugString(TEXT("\n"));
+		MessageBox(NULL, TEXT("シェーダーを作成できませんでした。"), TEXT("エラー"), MB_OK);
 		return 0;
 	}
-
-	// ジオメトリーシェーダーの作成
-	ComPtr<ID3D11GeometryShader> geometryShader;
-	hr = graphicsDevice->CreateGeometryShader(
-		g_BasicGeometryShader, ARRAYSIZE(g_BasicGeometryShader),
-		NULL,
-		&geometryShader);
-	if (FAILED(hr)) {
-		OutputDebugString(L"ジオメトリーシェーダーを作成できませんでした。");
-	}
-
-	// ピクセルシェーダーの作成
-	ComPtr<ID3D11PixelShader> pixelShader;
-	hr = graphicsDevice->CreatePixelShader(
-		g_BasicPixelShader,
-		ARRAYSIZE(g_BasicPixelShader),
-		NULL,
-		&pixelShader);
-	if (FAILED(hr)) {
-		OutputDebugString(L"ピクセルシェーダーを作成できませんでした。");
-	}
-
-	//D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	 0,							   0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//};
-	D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
 
 	// 入力レイアウトを作成
 	ComPtr<ID3D11InputLayout> inputLayout;
 	hr = graphicsDevice->CreateInputLayout(
-		inputElementDescs,				// 入力要素についての記述
-		ARRAYSIZE(inputElementDescs),	// inputElementDescs配列の数
-		g_BasicVertexShader,	// 入力を受け取る頂点シェーダーのバイトコード
-		ARRAYSIZE(g_BasicVertexShader),		// バイトコードのサイズ
+		VertexPositionNormal::inputElementDescs, 				// 入力要素についての記述
+		std::size(VertexPositionNormal::inputElementDescs),		// inputElementDescs配列の数
+		vertexShader->GetBytecode(),							// 入力を受け取る頂点シェーダーのバイトコード
+		vertexShader->GetBytecodeLength(),						// バイトコードのサイズ
 		&inputLayout);
 	if (FAILED(hr)) {
 		OutputDebugString(L"入力レイアウトを作成できませんでした。");
@@ -305,7 +246,7 @@ int Game::Run(const WindowSettings& settings)
 		const auto eyeUpDirection =
 			XMVector3Rotate(XMVectorSet(0, 1, 0, 0), XMLoadFloat4(&cameraRotation));
 
-		// 定数バッファーを更新
+		// ビュー変換行列を更新
 		const auto viewMatrix = XMMatrixLookToLH(
 			XMLoadFloat3(&eyePosition), eyeDirection, eyeUpDirection);
 		XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixTranspose(viewMatrix));
@@ -353,7 +294,7 @@ int Game::Run(const WindowSettings& settings)
 
 
 		// 頂点バッファーを設定
-		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer.Get()};
+		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer->GetNativePointer() };
 		UINT strides[1] = { sizeof(VertexPositionNormal) };
 		UINT offsets[1] = { 0 };
 		immediateContext->IASetVertexBuffers(
@@ -362,23 +303,23 @@ int Game::Run(const WindowSettings& settings)
 			vertexBuffers, strides, offsets);
 
 		// インデックスバッファーを設定
-		immediateContext->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		immediateContext->IASetIndexBuffer(indexBuffer->GetNativePointer(), DXGI_FORMAT_R32_UINT, 0);
 		// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
 		immediateContext->IASetInputLayout(inputLayout.Get());
 		// プリミティブトポロジーとしてトライアングルを設定
 		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// 定数バッファーを更新
-		immediateContext->UpdateSubresource(constantBuffer.Get(), 0, NULL, &constantBufferPerFrame, 0, 0);
+		constantBuffer->SetData(&constantBufferPerFrame);
 
 		// シェーダーを設定
-		immediateContext->VSSetShader(vertexShader.Get(), NULL, 0);
-		immediateContext->GSSetShader(geometryShader.Get(), NULL, 0);
-		immediateContext->PSSetShader(pixelShader.Get(), NULL, 0);
+		immediateContext->VSSetShader(vertexShader->GetNativePointer(), NULL, 0);
+		immediateContext->GSSetShader(geometryShader->GetNativePointer(), NULL, 0);
+		immediateContext->PSSetShader(pixelShader->GetNativePointer(), NULL, 0);
 
 		
 		// シェーダーに定数バッファーを設定
-		ID3D11Buffer* constantBuffers[] = { constantBuffer.Get() };
+		ID3D11Buffer* constantBuffers[] = { constantBuffer->GetNativePointer() };
 		immediateContext->VSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 		immediateContext->GSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
