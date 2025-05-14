@@ -6,7 +6,18 @@ cbuffer ConstantBufferPerFrame
     float4x4 Projection;
     float4x4 WorldViewProjection;
     float4 MaterialColor;
+    
+    // カメラの位置座標
+    float4 ViewPosition;
+	// ライトの位置座標(平行光源 w = 0, 点光源 w = 1)
     float4 LightPosition;
+	// マテリアルの表面カラー
+    float4 MaterialDiffuse;
+
+	// マテリアルの鏡面反射カラー
+    float3 MaterialSpecularColor;
+	// マテリアルの鏡面反射の強さ
+    float MaterialSpecularPower;
 };
 
 // 頂点シェーダーの入力データ
