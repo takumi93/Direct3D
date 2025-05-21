@@ -1,5 +1,8 @@
 #include "BasicShader.hlsli"
 
+Texture2D diffuseTexture;
+SamplerState diffuseTextureSampler;
+
 float4 main(PSInput input) : SV_TARGET
 {
     // 面から光源を指す正規化ベクトルL(平行光源(w=0)と点光源(w=1))
@@ -15,6 +18,9 @@ float4 main(PSInput input) : SV_TARGET
     float3 viewDir = normalize(ViewPosition - input.worldPosition).xyz;
     float specular = pow(saturate(dot(reflectDir, viewDir)), MaterialSpecularPower);
     float3 specularColor = specular * MaterialSpecularColor.rgb;
+    
+    float4 texel = diffuseTexture.Sample(diffuseTextureSampler, input.texCoord);
 
-    return float4(diffuseColor + specularColor, MaterialDiffuse.a);
+    return float4(texel.rgb * diffuseColor + specularColor, MaterialDiffuse.a * texel.a);
+    //return float4(texel.rgb, MaterialDiffuse.a * texel.a);
 }

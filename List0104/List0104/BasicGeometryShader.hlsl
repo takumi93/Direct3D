@@ -14,6 +14,7 @@ void main(
         element.worldPosition = mul(input[i].position, World);
         // 位置座標（ワールド空間）
         element.worldNormal = normalize(mul(input[i].normal, (float3x3) World));
+        element.texCoord = input[i].texCoord;
         output.Append(element);
     }
 }

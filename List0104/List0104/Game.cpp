@@ -50,37 +50,37 @@ int Game::Run(const WindowSettings& settings)
 
 	// 頂点データの配列
 	// 配列の左は座標で右は頂点の向きを指定
-	constexpr VertexPositionNormal vertices[] = {
+	constexpr VertexPositionNormalTexture vertices[] = {
 		// Top
-		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-		{ { 0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
-		{ {-0.5f, 0.5f,-0.5f }, { 0.0f, 1.0f, 0.0f } },
-		{ { 0.5f, 0.5f,-0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f }},
+		{ { 0.5f, 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f }},
+		{ {-0.5f, 0.5f,-0.5f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f }},
+		{ { 0.5f, 0.5f,-0.5f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f }},
 		// Bottom
-		{ { 0.5f,-0.5f, 0.5f }, { 0.0f,-1.0f, 0.0f } },
-		{ {-0.5f,-0.5f, 0.5f }, { 0.0f,-1.0f, 0.0f } },
-		{ { 0.5f,-0.5f,-0.5f }, { 0.0f,-1.0f, 0.0f } },
-		{ {-0.5f,-0.5f,-0.5f }, { 0.0f,-1.0f, 0.0f } },
+		{ { 0.5f,-0.5f, 0.5f }, { 0.0f,-1.0f, 0.0f }, { 0.0f, 0.0f }},
+		{ {-0.5f,-0.5f, 0.5f }, { 0.0f,-1.0f, 0.0f }, { 1.0f, 0.0f }},
+		{ { 0.5f,-0.5f,-0.5f }, { 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f }},
+		{ {-0.5f,-0.5f,-0.5f }, { 0.0f,-1.0f, 0.0f }, { 1.0f, 1.0f }},
 		// Front
-		{ { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-		{ { 0.5f,-0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
-		{ {-0.5f,-0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } },
+		{ { 0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
+		{ {-0.5f, 0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
+		{ { 0.5f,-0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
+		{ {-0.5f,-0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
 		// Back
-		{ {-0.5f, 0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
-		{ { 0.5f, 0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
-		{ {-0.5f,-0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
-		{ { 0.5f,-0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f } },
+		{ {-0.5f, 0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f }, { 0.0f, 0.0f } },
+		{ { 0.5f, 0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f }, { 1.0f, 0.0f } },
+		{ {-0.5f,-0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f }, { 0.0f, 1.0f } },
+		{ { 0.5f,-0.5f,-0.5f }, { 0.0f, 0.0f,-1.0f }, { 1.0f, 1.0f } },
 		// Left
-		{ {-0.5f, 0.5f, 0.5f }, {-1.0f, 0.0f, 0.0f } },
-		{ {-0.5f, 0.5f,-0.5f }, {-1.0f, 0.0f, 0.0f } },
-		{ {-0.5f,-0.5f, 0.5f }, {-1.0f, 0.0f, 0.0f } },
-		{ {-0.5f,-0.5f,-0.5f }, {-1.0f, 0.0f, 0.0f } },
+		{ {-0.5f, 0.5f, 0.5f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+		{ {-0.5f, 0.5f,-0.5f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
+		{ {-0.5f,-0.5f, 0.5f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
+		{ {-0.5f,-0.5f,-0.5f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
 		// Right
-		{ { 0.5f, 0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f } },
-		{ { 0.5f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
-		{ { 0.5f,-0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f } },
-		{ { 0.5f,-0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f, 0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
+		{ { 0.5f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
+		{ { 0.5f,-0.5f,-0.5f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
+		{ { 0.5f,-0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
 	};
 	// インデックスデータの配列
 	constexpr UINT32 indices[] = {
@@ -92,6 +92,22 @@ int Game::Run(const WindowSettings& settings)
 		20, 21, 22, 23, 22, 21,
 	};
 	constexpr UINT indexCount = _countof(indices);
+
+	// 画像データのダミー
+	constexpr uint32_t source[16] = {
+		0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
+		0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
+		0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
+		0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
+	};
+
+	//// 画像データのダミー
+	//constexpr uint8_t source[][4] = {
+	//	{0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF},
+	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
+	//	{0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF},
+	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
+	//};
 	
 	// バッファー
 	std::shared_ptr<VertexBuffer> vertexBuffer;
@@ -185,14 +201,83 @@ int Game::Run(const WindowSettings& settings)
 	// 入力レイアウトを作成
 	ComPtr<ID3D11InputLayout> inputLayout;
 	hr = graphicsDevice->CreateInputLayout(
-		VertexPositionNormal::inputElementDescs, 				// 入力要素についての記述
-		std::size(VertexPositionNormal::inputElementDescs),		// inputElementDescs配列の数
+		VertexPositionNormalTexture::inputElementDescs, 				// 入力要素についての記述
+		std::size(VertexPositionNormalTexture::inputElementDescs),		// inputElementDescs配列の数
 		vertexShader->GetBytecode(),							// 入力を受け取る頂点シェーダーのバイトコード
 		vertexShader->GetBytecodeLength(),						// バイトコードのサイズ
 		&inputLayout);
 	if (FAILED(hr)) {
 		OutputDebugString(L"入力レイアウトを作成できませんでした。");
 		return 0;
+	}
+
+	// テクスチャーを作成
+	ID3D11Texture2D* texture = nullptr;
+	{
+		D3D11_TEXTURE2D_DESC desc = {};
+		desc.Width = 4;
+		desc.Height = 4;
+		desc.MipLevels = 1;
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA initialData = {};
+		initialData.pSysMem = source;
+		initialData.SysMemPitch = 4 * desc.Width;
+		initialData.SysMemSlicePitch = 0;
+
+		auto hr = graphicsDevice->CreateTexture2D(&desc, &initialData, &texture);
+		if (FAILED(hr)) {
+			OutputDebugString(L"テクスチャーを作成できませんでした。");
+			return -1;
+		}
+	}
+
+	// テクスチャー用のシェーダーリソースビューを作成
+	ID3D11ShaderResourceView* textureSRV = nullptr;
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC desc = {};
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		desc.Texture2D.MipLevels = 1;
+		auto hr = graphicsDevice->CreateShaderResourceView(texture, &desc, &textureSRV);
+		if (FAILED(hr))
+		{
+			OutputDebugString(L"テクスチャーを作成できませんでした。");
+			return -1;
+		}
+	}
+
+	ID3D11SamplerState* samplerState = nullptr;
+	{
+		D3D11_SAMPLER_DESC samplerDesc;
+		//samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MipLODBias = 0.0f;
+		samplerDesc.MaxAnisotropy = 1;
+		samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+		samplerDesc.BorderColor[0] = 0;
+		samplerDesc.BorderColor[1] = 0;
+		samplerDesc.BorderColor[2] = 0;
+		samplerDesc.BorderColor[3] = 0;
+		samplerDesc.MinLOD = 0;
+		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		auto hr = graphicsDevice->CreateSamplerState(&samplerDesc, &samplerState);
+		if (FAILED(hr))
+		{
+			OutputDebugString(L"テクスチャーを作成できませんでした。");
+			return -1;
+		}
 	}
 
 	// 位置座標
@@ -308,7 +393,7 @@ int Game::Run(const WindowSettings& settings)
 
 		// 頂点バッファーを設定
 		ID3D11Buffer* vertexBuffers[1] = { vertexBuffer->GetNativePointer() };
-		UINT strides[1] = { sizeof(VertexPositionNormal) };
+		UINT strides[1] = { sizeof(VertexPositionNormalTexture) };
 		UINT offsets[1] = { 0 };
 		immediateContext->IASetVertexBuffers(
 			0,
@@ -337,7 +422,11 @@ int Game::Run(const WindowSettings& settings)
 		immediateContext->GSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 
-		
+		// ピクセルシェーダーにテクスチャーを設定
+		ID3D11ShaderResourceView* textureViews[] = { textureSRV, };
+		immediateContext->PSSetShaderResources(0, _countof(textureViews), textureViews);
+		ID3D11SamplerState* samplerStates[] = { samplerState, };
+		immediateContext->PSSetSamplers(0, _countof(samplerStates), samplerStates);
 
 		// 描画
 		immediateContext->DrawIndexed(indexCount, 0, 0);
@@ -366,6 +455,11 @@ int Game::Run(const WindowSettings& settings)
 			DispatchMessage(&msg);
 		}
 	}
+
+	// 解放処理
+	samplerState->Release();
+	textureSRV->Release();
+	texture->Release();
 
 	return (int)msg.wParam;
 }

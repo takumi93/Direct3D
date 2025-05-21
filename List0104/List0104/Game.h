@@ -99,16 +99,18 @@ struct VertexPositionColor
 	};
 };
 
-// 位置座標と法線ベクトルを頂点情報に持つデータを表します。
-struct VertexPositionNormal
+// 位置座標と法線ベクトルとテクスチャー座標を頂点情報に持つデータを表します。
+struct VertexPositionNormalTexture
 {
-	DirectX::XMFLOAT3 position;	// 位置座標
-	DirectX::XMFLOAT3 normal;	// 法線ベクトル
+	DirectX::XMFLOAT3 position;				// 位置座標
+	DirectX::XMFLOAT3 normal;				// 法線ベクトル
+	DirectX::XMFLOAT2 textureCoordinate;	// テクスチャー座標
 
 	// この頂点情報をD3D11_INPUT_ELEMENT_DESCで表した配列を取得します。
 	static constexpr D3D11_INPUT_ELEMENT_DESC inputElementDescs[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 };
 

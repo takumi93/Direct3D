@@ -25,6 +25,7 @@ struct VSInput
 {
     float4 position : POSITION;
     float3 normal : NORMAL;
+    float2 texCoord : TEXCOORD;
 };
 
 // 頂点シェーダーの出力データ
@@ -32,6 +33,7 @@ struct VSOutput
 {
     float4 position : SV_POSITION;
     float3 normal : NORMAL;
+    float2 texCoord : TEXCOORD;
 };
 
 // ジオメトリーシェーダーの入力データ
@@ -43,6 +45,7 @@ struct GSOutput
     float4 position : SV_POSITION;      // WVP変換
     float4 worldPosition : POSITION;    // 法線ベクトル(ワールド空間)
     float3 worldNormal : NORMAL;        // 位置座標（ワールド空間）
+    float2 texCoord : TEXCOORD;
 };
 
 // ピクセルシェーダーの入力データ(ピクセルシェーダと頂点シェーダの型が一緒のため)
