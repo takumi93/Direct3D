@@ -15,30 +15,31 @@ SwapChain::SwapChain(
 	// 関数の実行結果を受け取る変数
 	HRESULT hr = S_OK;
 
-	ComPtr<IDXGISwapChain> swapChain;
+	ComPtr<IDXGISwapChain1> swapChain;
 	ComPtr<ID3D11RenderTargetView> renderTargetView;
 	ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
 	ComPtr<ID3D11DepthStencilView> depthStencilView;
 	ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
 
 	// 作成するスワップチェーンについての情報を格納
-	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-	swapChainDesc.BufferDesc.Width = window->GetWidth();
-	swapChainDesc.BufferDesc.Height = window->GetHeight();
-	swapChainDesc.BufferDesc.RefreshRate = { 60, 1 };
-	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+	swapChainDesc.Width = window->GetWidth();
+	swapChainDesc.Height = window->GetHeight();
+	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.Stereo = FALSE;
 	swapChainDesc.SampleDesc = { 1, 0 };
 	swapChainDesc.BufferUsage =
 		DXGI_USAGE_RENDER_TARGET_OUTPUT |
 		DXGI_USAGE_SHADER_INPUT;	// シェーダーリソースとして使用することを設定
 	swapChainDesc.BufferCount = 2;
-	swapChainDesc.OutputWindow = window->GetHandle();
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-	swapChainDesc.Windowed = TRUE;
+	swapChainDesc.Scaling = DXGI_SCALING::DXGI_SCALING_STRETCH;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_UNSPECIFIED;
+	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-	// 画面サイズを変える際にスワップチェーンだけ変更する必要があるため
+	// 画面サイズを変える際(全画面表示とか)にスワップチェーンだけ変更する必要があるため
 	//スワップチェーンを作成
-	hr = graphics->GetDXGI_Factory()->CreateSwapChain(graphics->GetDevice(), &swapChainDesc, &swapChain);
+	hr = graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(graphics->GetDevice(), window->GetHandle(), &swapChainDesc, nullptr, nullptr, &swapChain);
 	if (FAILED(hr)) {
 		throw _com_error(hr);
 	}
@@ -92,8 +93,8 @@ SwapChain::SwapChain(
 	{
 		ComPtr<ID3D11Texture2D> depthStencil;
 		D3D11_TEXTURE2D_DESC depthStencilDesc = {};
-		depthStencilDesc.Width = swapChainDesc.BufferDesc.Width;
-		depthStencilDesc.Height = swapChainDesc.BufferDesc.Height;
+		depthStencilDesc.Width = swapChainDesc.Width;
+		depthStencilDesc.Height = swapChainDesc.Height;
 		depthStencilDesc.MipLevels = 1;
 		depthStencilDesc.ArraySize = 1;
 		depthStencilDesc.Format = textureFormat;

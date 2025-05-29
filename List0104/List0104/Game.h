@@ -7,10 +7,18 @@
 #include <Windows.h>
 #include <memory>
 #include <string>
-#include <d3d11.h>
+#include <dxgi1_6.h>
+#include <d3d11_4.h>
 #include <DirectXMath.h>
 #include <wrl/client.h>
 
+//=============================================================================
+// 構造体
+// 
+// 
+//=============================================================================
+
+// 作成するウィンドウの情報
 struct WindowSettings
 {
 	// ウィンドウのタイトル
@@ -19,60 +27,6 @@ struct WindowSettings
 	int screenWidth = 640;
 	// ウィンドウの高さ
 	int screenHeight = 480;
-};
-
-// メイン ウィンドウを表します。
-class MainWindow
-{
-public:
-	// このクラスのインスタンスを初期化します。
-	MainWindow(const WindowSettings& settings = WindowSettings());
-	virtual ~MainWindow() = default;
-
-	// このウィンドウの幅を取得します。
-	int GetWidth() const;
-	// このウィンドウの高さを取得します。
-	int GetHeight() const;
-	// このウィンドウのハンドルを取得します。
-	HWND GetHandle() const;
-
-private:
-	// このウィンドウのメッセージを処理します。
-	static LRESULT CALLBACK WindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
-
-	WindowSettings settings;
-	// ウィンドウのハンドル
-	HWND handle = NULL;
-};
-
-// グラフィックス機能を表します。
-class Graphics final
-{
-public:
-	// このクラスのインスタンスを初期化します。
-	Graphics();
-	~Graphics() = default;
-
-	// IDXGIFactory1 を取得します。
-	IDXGIFactory1* GetDXGI_Factory();
-	// ID3D11Device を取得します。
-	ID3D11Device* GetDevice();
-	// ID3D11DeviceContext を取得します。
-	ID3D11DeviceContext* GetDeviceContext();
-
-private:
-	// DXGI 1.1のファクトリー
-	Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory;
-	// DXGI 1.1のアダプター
-	Microsoft::WRL::ComPtr<IDXGIAdapter1> dxgiAdapter;
-	// DXGI 1.1のデバイス
-	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
-	// Direct3D 11のデバイス
-	Microsoft::WRL::ComPtr<ID3D11Device> graphicsDevice;
-	// Direct3D 11のデバイス コンテキスト
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
-	// Direct3D 11の機能レベル
-	D3D_FEATURE_LEVEL featureLevel = {};
 };
 
 // 位置座標のみを頂点情報に持つデータを表します。
@@ -112,6 +66,68 @@ struct VertexPositionNormalTexture
 		{ "NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
+};
+
+//=============================================================================
+// クラス
+// 
+// 
+//=============================================================================
+
+// メイン ウィンドウを表します。
+class MainWindow
+{
+public:
+	// このクラスのインスタンスを初期化します。
+	MainWindow(const WindowSettings& settings = WindowSettings());
+	virtual ~MainWindow() = default;
+
+	// このウィンドウの幅を取得します。
+	int GetWidth() const;
+	// このウィンドウの高さを取得します。
+	int GetHeight() const;
+	// このウィンドウのハンドルを取得します。
+	HWND GetHandle() const;
+
+private:
+	// このウィンドウのメッセージを処理します。
+	static LRESULT CALLBACK WindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
+
+	WindowSettings settings;
+	// ウィンドウのハンドル
+	HWND handle = NULL;
+};
+
+// グラフィックス機能を表します。
+class Graphics final
+{
+public:
+	// このクラスのインスタンスを初期化します。
+	Graphics();
+	~Graphics() = default;
+
+	// IDXGIFactory1 を取得します。
+	IDXGIFactory2* GetDXGI_Factory();
+	// ID3D11Device を取得します。
+	ID3D11Device* GetDevice();
+	// ID3D11DeviceContext を取得します。
+	ID3D11DeviceContext* GetDeviceContext();
+
+private:
+	// ファクトリーを継承
+	// DXGI 1.6のファクトリー
+	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
+	// アダプターを継承
+	// DXGI 1.1のアダプター
+	Microsoft::WRL::ComPtr<IDXGIAdapter4> dxgiAdapter;
+	// DXGI 1.1のデバイス
+	Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
+	// Direct3D 11のデバイス
+	Microsoft::WRL::ComPtr<ID3D11Device5> graphicsDevice;
+	// Direct3D 11のデバイス コンテキスト
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext4> immediateContext;
+	// Direct3D 11の機能レベル
+	D3D_FEATURE_LEVEL featureLevel = {};
 };
 
 // 頂点バッファーを表します。
@@ -169,6 +185,22 @@ public:
 private:
 	std::shared_ptr<Graphics> graphics;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+};
+
+class InputLayout {
+public:
+	// クラスの新しいインスタンスを初期化
+	InputLayout(
+		ID3D11Device* graphicsDevice,
+		const D3D11_INPUT_ELEMENT_DESC* inputElementDescs, UINT numElements,
+		const void* shaderBytecodeWithInputSignature, SIZE_T bytecodeLength);
+
+	~InputLayout() = default;
+
+	ID3D11InputLayout* GetNativePointer();
+
+private:
+	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 };
 
 // 頂点シェーダーを表します。
@@ -253,14 +285,36 @@ public:
 	void Present(UINT syncInterval);
 
 private:
+	// 継承
 	std::shared_ptr<Graphics> graphics;
 	std::shared_ptr<MainWindow> window;
 
-	Microsoft::WRL::ComPtr<IDXGISwapChain> swapChain;
+	Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain;
 	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
 	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
+};
+
+class Texture2D
+{
+public:
+	Texture2D(
+		ID3D11Device* graphicsDevice,
+		UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, bool mipChain = true);
+	
+	~Texture2D() = default;
+
+	void SetData(const void* data);
+
+	ID3D11Texture2D* GetNativePointer();
+	ID3D11SamplerState* GetSamplerState();
+	ID3D11ShaderResourceView* GetShaderResourceView();
+
+private:
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView;
 };
 
 // アプリケーション全体を表します。

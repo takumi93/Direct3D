@@ -109,10 +109,21 @@ int Game::Run(const WindowSettings& settings)
 	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
 	//};
 	
+	// 自分で作ったクラスはshared、既存のクラスはComptr
 	// バッファー
 	std::shared_ptr<VertexBuffer> vertexBuffer;
 	// インデックスバッファー
 	std::shared_ptr<IndexBuffer> indexBuffer;
+	// 定数バッファー
+	std::shared_ptr<ConstantBuffer> constantBuffer;
+	// シェーダー
+	std::shared_ptr<BasicVertexShader> vertexShader;
+	std::shared_ptr<BasicGeometryShader> geometryShader;
+	std::shared_ptr<BasicPixelShader> pixelShader;
+	// 入力レイアウト
+	std::shared_ptr<InputLayout> inputLayout;
+	// テクスチャー
+	std::shared_ptr<Texture2D> texture;
 
 	try {
 		// 頂点バッファーを作成
@@ -153,14 +164,14 @@ int Game::Run(const WindowSettings& settings)
 		// 鏡面反射の色(r, g, b) = (x, y, z)
 		DirectX::XMFLOAT3 materialSpecularColor = DirectX::XMFLOAT3(1, 1, 1);
 		// 鏡面反射の強さ(float) = w
-		float materialSpecularPower = 1;
+		float materialSpecularPower = 2;
 	};
 	
 	ConstantBufferPerFrame constantBufferPerFrame = {};
-	// 定数バッファーを作成
-	std::shared_ptr<ConstantBuffer> constantBuffer;
+
 	// バッファーを作成
 	try {
+		// 定数バッファーを作成
 		constantBuffer = std::make_shared<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
 	}
 	catch (const _com_error& error) {
@@ -180,12 +191,8 @@ int Game::Run(const WindowSettings& settings)
 	constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
 	constantBuffer->SetData(&constantBufferPerFrame);
 
-	// シェーダーを作成
-	std::shared_ptr<BasicVertexShader> vertexShader;
-	std::shared_ptr<BasicGeometryShader> geometryShader;
-	std::shared_ptr<BasicPixelShader> pixelShader;
-
 	try {
+		// シェーダーを作成
 		vertexShader = std::make_shared<BasicVertexShader>(graphics);
 		geometryShader = std::make_shared<BasicGeometryShader>(graphics);
 		pixelShader = std::make_shared<BasicPixelShader>(graphics);
@@ -198,87 +205,58 @@ int Game::Run(const WindowSettings& settings)
 		return 0;
 	}
 
-	// 入力レイアウトを作成
-	ComPtr<ID3D11InputLayout> inputLayout;
-	hr = graphicsDevice->CreateInputLayout(
-		VertexPositionNormalTexture::inputElementDescs, 				// 入力要素についての記述
-		std::size(VertexPositionNormalTexture::inputElementDescs),		// inputElementDescs配列の数
-		vertexShader->GetBytecode(),							// 入力を受け取る頂点シェーダーのバイトコード
-		vertexShader->GetBytecodeLength(),						// バイトコードのサイズ
-		&inputLayout);
-	if (FAILED(hr)) {
-		OutputDebugString(L"入力レイアウトを作成できませんでした。");
+	try {
+		// 入力レイアウトを作成
+		inputLayout = std::make_shared<InputLayout>(
+			graphicsDevice,												// 使用するグラフィックデバイス
+			VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
+			std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
+			vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
+			vertexShader->GetBytecodeLength()							// バイトコードのサイズ
+			//&inputLayout
+		);
+	}
+	catch (const _com_error& error) {
+		OutputDebugString(TEXT("ERROR: "));
+		OutputDebugString(error.ErrorMessage());
+		OutputDebugString(TEXT("\n"));
+		MessageBox(NULL, TEXT("入力レイアウトを作成できませんでした。"), TEXT("エラー"), MB_OK);
 		return 0;
 	}
 
-	// テクスチャーを作成
-	ID3D11Texture2D* texture = nullptr;
-	{
-		D3D11_TEXTURE2D_DESC desc = {};
-		desc.Width = 4;
-		desc.Height = 4;
-		desc.MipLevels = 1;
-		desc.ArraySize = 1;
-		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-		desc.CPUAccessFlags = 0;
-		desc.MiscFlags = 0;
 
-		D3D11_SUBRESOURCE_DATA initialData = {};
-		initialData.pSysMem = source;
-		initialData.SysMemPitch = 4 * desc.Width;
-		initialData.SysMemSlicePitch = 0;
+	//ComPtr<ID3D11InputLayout> inputLayout;
+	//hr = graphicsDevice->CreateInputLayout(
+	//	VertexPositionNormalTexture::inputElementDescs, 				// 入力要素についての記述
+	//	std::size(VertexPositionNormalTexture::inputElementDescs),		// inputElementDescs配列の数
+	//	vertexShader->GetBytecode(),							// 入力を受け取る頂点シェーダーのバイトコード
+	//	vertexShader->GetBytecodeLength(),						// バイトコードのサイズ
+	//	&inputLayout);
+	//if (FAILED(hr)) {
+	//	OutputDebugString(L"入力レイアウトを作成できませんでした。");
+	//	return 0;
+	//}
 
-		auto hr = graphicsDevice->CreateTexture2D(&desc, &initialData, &texture);
-		if (FAILED(hr)) {
-			OutputDebugString(L"テクスチャーを作成できませんでした。");
-			return -1;
-		}
+	try {
+		// テクスチャーを作成
+		texture = std::make_shared<Texture2D>(
+			graphicsDevice,
+			4,
+			4,
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			false
+		);
+	}
+	catch (const _com_error& error) {
+		OutputDebugString(TEXT("ERROR: "));
+		OutputDebugString(error.ErrorMessage());
+		OutputDebugString(TEXT("\n"));
+		MessageBox(NULL, TEXT("テクスチャを作成できませんでした。"), TEXT("エラー"), MB_OK);
+		return 0;
 	}
 
-	// テクスチャー用のシェーダーリソースビューを作成
-	ID3D11ShaderResourceView* textureSRV = nullptr;
-	{
-		D3D11_SHADER_RESOURCE_VIEW_DESC desc = {};
-		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		desc.Texture2D.MipLevels = 1;
-		auto hr = graphicsDevice->CreateShaderResourceView(texture, &desc, &textureSRV);
-		if (FAILED(hr))
-		{
-			OutputDebugString(L"テクスチャーを作成できませんでした。");
-			return -1;
-		}
-	}
-
-	ID3D11SamplerState* samplerState = nullptr;
-	{
-		D3D11_SAMPLER_DESC samplerDesc;
-		//samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerDesc.MipLODBias = 0.0f;
-		samplerDesc.MaxAnisotropy = 1;
-		samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-		samplerDesc.BorderColor[0] = 0;
-		samplerDesc.BorderColor[1] = 0;
-		samplerDesc.BorderColor[2] = 0;
-		samplerDesc.BorderColor[3] = 0;
-		samplerDesc.MinLOD = 0;
-		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-		auto hr = graphicsDevice->CreateSamplerState(&samplerDesc, &samplerState);
-		if (FAILED(hr))
-		{
-			OutputDebugString(L"テクスチャーを作成できませんでした。");
-			return -1;
-		}
-	}
+	// ピクセルデータを更新
+	texture->SetData(source);
 
 	// 位置座標
 	XMFLOAT3 position = { 0, 0, 0 };
@@ -403,7 +381,7 @@ int Game::Run(const WindowSettings& settings)
 		// インデックスバッファーを設定
 		immediateContext->IASetIndexBuffer(indexBuffer->GetNativePointer(), DXGI_FORMAT_R32_UINT, 0);
 		// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
-		immediateContext->IASetInputLayout(inputLayout.Get());
+		immediateContext->IASetInputLayout(inputLayout->GetNativePointer());
 		// プリミティブトポロジーとしてトライアングルを設定
 		immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -423,9 +401,9 @@ int Game::Run(const WindowSettings& settings)
 		immediateContext->PSSetConstantBuffers(0, _countof(constantBuffers), constantBuffers);
 
 		// ピクセルシェーダーにテクスチャーを設定
-		ID3D11ShaderResourceView* textureViews[] = { textureSRV, };
+		ID3D11ShaderResourceView* textureViews[] = { texture->GetShaderResourceView(),};
 		immediateContext->PSSetShaderResources(0, _countof(textureViews), textureViews);
-		ID3D11SamplerState* samplerStates[] = { samplerState, };
+		ID3D11SamplerState* samplerStates[] = { texture->GetSamplerState(),};
 		immediateContext->PSSetSamplers(0, _countof(samplerStates), samplerStates);
 
 		// 描画
@@ -455,11 +433,6 @@ int Game::Run(const WindowSettings& settings)
 			DispatchMessage(&msg);
 		}
 	}
-
-	// 解放処理
-	samplerState->Release();
-	textureSRV->Release();
-	texture->Release();
 
 	return (int)msg.wParam;
 }
