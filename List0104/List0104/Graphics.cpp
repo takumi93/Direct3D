@@ -29,6 +29,7 @@ namespace {
 Graphics::Graphics() {
 	HRESULT hr = S_OK;
 
+	// ファクトリーを作成
 	hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dxgiFactory));
 	if (FAILED(hr)) {
 		throw _com_error(hr);
@@ -91,6 +92,9 @@ Graphics::Graphics() {
 	if (FAILED(hr)) {
 		throw _com_error(hr);
 	}
+
+	device.Reset();
+	deviceContext.Reset();
 
 	//// デバイス、デバイスコンテキストを作成
 	//hr = D3D11CreateDevice(

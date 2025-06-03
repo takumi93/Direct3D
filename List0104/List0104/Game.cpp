@@ -5,6 +5,7 @@
 #include <DirectXMath.h>	// DirectXの算術ライブラリー
 #include <comdef.h>
 #include <exception>
+#include <memory>
 #include "Game.h"
 
 using namespace DirectX;
@@ -109,27 +110,55 @@ int Game::Run(const WindowSettings& settings)
 	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
 	//};
 	
-	// 自分で作ったクラスはshared、既存のクラスはComptr
+	//// 自分で作ったクラスはunique or shared、既存のクラスはComptr
+	// sharedの時
+	//// バッファー
+	//std::shared_ptr<VertexBuffer> vertexBuffer;
+	//// インデックスバッファー
+	//std::shared_ptr<IndexBuffer> indexBuffer;
+	//// 定数バッファー
+	//std::shared_ptr<ConstantBuffer> constantBuffer;
+	//// シェーダー
+	//std::shared_ptr<BasicVertexShader> vertexShader;
+	//std::shared_ptr<BasicGeometryShader> geometryShader;
+	//std::shared_ptr<BasicPixelShader> pixelShader;
+	//// 入力レイアウト
+	//std::shared_ptr<InputLayout> inputLayout;
+	//// テクスチャー
+	//std::shared_ptr<Texture2D> texture;
+
+	// uniqueの時
 	// バッファー
-	std::shared_ptr<VertexBuffer> vertexBuffer;
+	std::unique_ptr<VertexBuffer> vertexBuffer;
 	// インデックスバッファー
-	std::shared_ptr<IndexBuffer> indexBuffer;
+	std::unique_ptr<IndexBuffer> indexBuffer;
 	// 定数バッファー
-	std::shared_ptr<ConstantBuffer> constantBuffer;
+	std::unique_ptr<ConstantBuffer> constantBuffer;
 	// シェーダー
-	std::shared_ptr<BasicVertexShader> vertexShader;
-	std::shared_ptr<BasicGeometryShader> geometryShader;
-	std::shared_ptr<BasicPixelShader> pixelShader;
+	std::unique_ptr<BasicVertexShader> vertexShader;
+	std::unique_ptr<BasicGeometryShader> geometryShader;
+	std::unique_ptr<BasicPixelShader> pixelShader;
 	// 入力レイアウト
-	std::shared_ptr<InputLayout> inputLayout;
+	std::unique_ptr<InputLayout> inputLayout;
 	// テクスチャー
-	std::shared_ptr<Texture2D> texture;
+	std::unique_ptr<Texture2D> texture;
 
 	try {
+		// sharedの時
+		//// 頂点バッファーを作成
+		//vertexBuffer = std::make_shared<VertexBuffer>(graphics, sizeof vertices);
+		//// インデックスバッファーを作成
+		//indexBuffer = std::make_shared<IndexBuffer>(graphics, sizeof vertices);
+
+		// uniqueの時
 		// 頂点バッファーを作成
-		vertexBuffer = std::make_shared<VertexBuffer>(graphics, sizeof vertices);
+		vertexBuffer.reset(new VertexBuffer(graphics, sizeof vertices));
 		// インデックスバッファーを作成
-		indexBuffer = std::make_shared<IndexBuffer>(graphics, sizeof vertices);
+		indexBuffer.reset(new IndexBuffer(graphics, sizeof indices));
+
+		// バッファーにデータを転送
+		vertexBuffer->SetData(vertices);
+		indexBuffer->SetData(indices);
 	}
 	catch (const _com_error& error) {
 		OutputDebugString(TEXT("ERROR: "));
@@ -139,9 +168,9 @@ int Game::Run(const WindowSettings& settings)
 		return 0;
 	}
 
-	// バッファーにデータを転送
-	vertexBuffer->SetData(vertices);
-	indexBuffer->SetData(indices);
+	//// バッファーにデータを転送
+	//vertexBuffer->SetData(vertices);
+	//indexBuffer->SetData(indices);
 
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
 	struct ConstantBufferPerFrame
@@ -171,8 +200,13 @@ int Game::Run(const WindowSettings& settings)
 
 	// バッファーを作成
 	try {
+		// sharedの時
+		//// 定数バッファーを作成
+		//constantBuffer = std::make_shared<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
+
+		// uniqueの時
 		// 定数バッファーを作成
-		constantBuffer = std::make_shared<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
+		constantBuffer.reset(new ConstantBuffer(graphics, sizeof constantBufferPerFrame));
 	}
 	catch (const _com_error& error) {
 		OutputDebugString(TEXT("ERROR: "));
@@ -192,10 +226,17 @@ int Game::Run(const WindowSettings& settings)
 	constantBuffer->SetData(&constantBufferPerFrame);
 
 	try {
+		// sharedの時
+		//// シェーダーを作成
+		//vertexShader = std::make_shared<BasicVertexShader>(graphics);
+		//geometryShader = std::make_shared<BasicGeometryShader>(graphics);
+		//pixelShader = std::make_shared<BasicPixelShader>(graphics);
+
+		// uniqueの時
 		// シェーダーを作成
-		vertexShader = std::make_shared<BasicVertexShader>(graphics);
-		geometryShader = std::make_shared<BasicGeometryShader>(graphics);
-		pixelShader = std::make_shared<BasicPixelShader>(graphics);
+		vertexShader.reset(new BasicVertexShader(graphics));
+		geometryShader.reset(new BasicGeometryShader(graphics));
+		pixelShader.reset(new BasicPixelShader(graphics));
 	}
 	catch (const _com_error& error) {
 		OutputDebugString(TEXT("ERROR: "));
@@ -206,14 +247,26 @@ int Game::Run(const WindowSettings& settings)
 	}
 
 	try {
+		// sharedの時
+		//// 入力レイアウトを作成
+		//inputLayout = std::make_shared<InputLayout>(
+		//	graphicsDevice,												// 使用するグラフィックデバイス
+		//	VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
+		//	std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
+		//	vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
+		//	vertexShader->GetBytecodeLength()							// バイトコードのサイズ
+		//	//&inputLayout
+		//);
+
+		// uniqueの時
 		// 入力レイアウトを作成
-		inputLayout = std::make_shared<InputLayout>(
+		inputLayout.reset(new InputLayout(
 			graphicsDevice,												// 使用するグラフィックデバイス
 			VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
 			std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
 			vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
 			vertexShader->GetBytecodeLength()							// バイトコードのサイズ
-			//&inputLayout
+			)
 		);
 	}
 	catch (const _com_error& error) {
@@ -224,27 +277,26 @@ int Game::Run(const WindowSettings& settings)
 		return 0;
 	}
 
-
-	//ComPtr<ID3D11InputLayout> inputLayout;
-	//hr = graphicsDevice->CreateInputLayout(
-	//	VertexPositionNormalTexture::inputElementDescs, 				// 入力要素についての記述
-	//	std::size(VertexPositionNormalTexture::inputElementDescs),		// inputElementDescs配列の数
-	//	vertexShader->GetBytecode(),							// 入力を受け取る頂点シェーダーのバイトコード
-	//	vertexShader->GetBytecodeLength(),						// バイトコードのサイズ
-	//	&inputLayout);
-	//if (FAILED(hr)) {
-	//	OutputDebugString(L"入力レイアウトを作成できませんでした。");
-	//	return 0;
-	//}
-
 	try {
+		// sharedの時
+		//// テクスチャーを作成
+		//texture = std::make_shared<Texture2D>(
+		//	graphicsDevice,
+		//	4,
+		//	4,
+		//	DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+		//	false
+		//);
+
+		// uniqueの時
 		// テクスチャーを作成
-		texture = std::make_shared<Texture2D>(
+		texture.reset(new Texture2D(
 			graphicsDevice,
 			4,
 			4,
 			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
 			false
+			)
 		);
 	}
 	catch (const _com_error& error) {

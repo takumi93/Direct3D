@@ -5,7 +5,7 @@
 #include "Game.h"
 #include <comdef.h>
 #include <new>
-using namespace std;
+
 using namespace Microsoft::WRL;
 
 // このクラスの新しいインスタンスを作成します。
