@@ -110,7 +110,7 @@ int Game::Run(const WindowSettings& settings)
 	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
 	//};
 	
-	//// 自分で作ったクラスはunique or shared、既存のクラスはComptr
+	// 自分で作ったクラスはunique or shared、既存のクラスはComptr
 	// sharedの時
 	//// バッファー
 	//std::shared_ptr<VertexBuffer> vertexBuffer;
@@ -148,7 +148,7 @@ int Game::Run(const WindowSettings& settings)
 		//// 頂点バッファーを作成
 		//vertexBuffer = std::make_shared<VertexBuffer>(graphics, sizeof vertices);
 		//// インデックスバッファーを作成
-		//indexBuffer = std::make_shared<IndexBuffer>(graphics, sizeof vertices);
+		//indexBuffer = std::make_shared<IndexBuffer>(graphics, sizeof indices);
 
 		// uniqueの時
 		// 頂点バッファーを作成
