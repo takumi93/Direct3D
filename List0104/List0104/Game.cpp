@@ -3,6 +3,7 @@
 // 
 //=============================================================================
 #include <DirectXMath.h>	// DirectXの算術ライブラリー
+#include <wincodec.h>
 #include <comdef.h>
 #include <exception>
 #include <memory>
@@ -14,6 +15,10 @@ using namespace Microsoft::WRL;
 // メッセージループを実行
 int Game::Run(const WindowSettings& settings)
 {
+	// COMライブラリを初期化
+	if (FAILED(CoInitialize(NULL))) {
+		return EXIT_FAILURE;
+	}
 	try {
 		// ウィンドウを作成
 		window = std::make_shared<MainWindow>(settings);
@@ -94,13 +99,13 @@ int Game::Run(const WindowSettings& settings)
 	};
 	constexpr UINT indexCount = _countof(indices);
 
-	// 画像データのダミー
-	constexpr uint32_t source[16] = {
-		0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
-		0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
-		0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
-		0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
-	};
+	//// 画像データのダミー
+	//constexpr uint32_t source[16] = {
+	//	0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
+	//	0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
+	//	0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
+	//	0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
+	//};
 
 	//// 画像データのダミー
 	//constexpr uint8_t source[][4] = {
@@ -111,23 +116,6 @@ int Game::Run(const WindowSettings& settings)
 	//};
 	
 	// 自分で作ったクラスはunique or shared、既存のクラスはComptr
-	// sharedの時
-	//// バッファー
-	//std::shared_ptr<VertexBuffer> vertexBuffer;
-	//// インデックスバッファー
-	//std::shared_ptr<IndexBuffer> indexBuffer;
-	//// 定数バッファー
-	//std::shared_ptr<ConstantBuffer> constantBuffer;
-	//// シェーダー
-	//std::shared_ptr<BasicVertexShader> vertexShader;
-	//std::shared_ptr<BasicGeometryShader> geometryShader;
-	//std::shared_ptr<BasicPixelShader> pixelShader;
-	//// 入力レイアウト
-	//std::shared_ptr<InputLayout> inputLayout;
-	//// テクスチャー
-	//std::shared_ptr<Texture2D> texture;
-
-	// uniqueの時
 	// バッファー
 	std::unique_ptr<VertexBuffer> vertexBuffer;
 	// インデックスバッファー
@@ -144,17 +132,12 @@ int Game::Run(const WindowSettings& settings)
 	std::unique_ptr<Texture2D> texture;
 
 	try {
-		// sharedの時
-		//// 頂点バッファーを作成
-		//vertexBuffer = std::make_shared<VertexBuffer>(graphics, sizeof vertices);
-		//// インデックスバッファーを作成
-		//indexBuffer = std::make_shared<IndexBuffer>(graphics, sizeof indices);
-
-		// uniqueの時
 		// 頂点バッファーを作成
-		vertexBuffer.reset(new VertexBuffer(graphics, sizeof vertices));
+		//vertexBuffer.reset(new VertexBuffer(graphics, sizeof vertices));
+		vertexBuffer = std::make_unique<VertexBuffer>(graphics, sizeof vertices);
 		// インデックスバッファーを作成
-		indexBuffer.reset(new IndexBuffer(graphics, sizeof indices));
+		//indexBuffer.reset(new IndexBuffer(graphics, sizeof indices));
+		indexBuffer = std::make_unique<IndexBuffer>(graphics, sizeof indices);
 
 		// バッファーにデータを転送
 		vertexBuffer->SetData(vertices);
@@ -167,10 +150,6 @@ int Game::Run(const WindowSettings& settings)
 		MessageBox(NULL, TEXT("バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
 		return 0;
 	}
-
-	//// バッファーにデータを転送
-	//vertexBuffer->SetData(vertices);
-	//indexBuffer->SetData(indices);
 
 	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
 	struct ConstantBufferPerFrame
@@ -200,13 +179,9 @@ int Game::Run(const WindowSettings& settings)
 
 	// バッファーを作成
 	try {
-		// sharedの時
-		//// 定数バッファーを作成
-		//constantBuffer = std::make_shared<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
-
-		// uniqueの時
 		// 定数バッファーを作成
-		constantBuffer.reset(new ConstantBuffer(graphics, sizeof constantBufferPerFrame));
+		//constantBuffer.reset(new ConstantBuffer(graphics, sizeof constantBufferPerFrame));
+		constantBuffer = std::make_unique<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
 	}
 	catch (const _com_error& error) {
 		OutputDebugString(TEXT("ERROR: "));
@@ -226,17 +201,13 @@ int Game::Run(const WindowSettings& settings)
 	constantBuffer->SetData(&constantBufferPerFrame);
 
 	try {
-		// sharedの時
-		//// シェーダーを作成
-		//vertexShader = std::make_shared<BasicVertexShader>(graphics);
-		//geometryShader = std::make_shared<BasicGeometryShader>(graphics);
-		//pixelShader = std::make_shared<BasicPixelShader>(graphics);
-
-		// uniqueの時
 		// シェーダーを作成
-		vertexShader.reset(new BasicVertexShader(graphics));
-		geometryShader.reset(new BasicGeometryShader(graphics));
-		pixelShader.reset(new BasicPixelShader(graphics));
+		//vertexShader.reset(new BasicVertexShader(graphics));
+		//geometryShader.reset(new BasicGeometryShader(graphics));
+		//pixelShader.reset(new BasicPixelShader(graphics));
+		vertexShader = std::make_unique<BasicVertexShader>(graphics);
+		geometryShader = std::make_unique<BasicGeometryShader>(graphics);
+		pixelShader = std::make_unique<BasicPixelShader>(graphics);
 	}
 	catch (const _com_error& error) {
 		OutputDebugString(TEXT("ERROR: "));
@@ -247,26 +218,22 @@ int Game::Run(const WindowSettings& settings)
 	}
 
 	try {
-		// sharedの時
-		//// 入力レイアウトを作成
-		//inputLayout = std::make_shared<InputLayout>(
+		// 入力レイアウトを作成
+		//inputLayout.reset(new InputLayout(
 		//	graphicsDevice,												// 使用するグラフィックデバイス
 		//	VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
 		//	std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
 		//	vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
 		//	vertexShader->GetBytecodeLength()							// バイトコードのサイズ
-		//	//&inputLayout
+		//	)
 		//);
 
-		// uniqueの時
-		// 入力レイアウトを作成
-		inputLayout.reset(new InputLayout(
+		inputLayout = std::make_unique<InputLayout>(
 			graphicsDevice,												// 使用するグラフィックデバイス
 			VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
 			std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
 			vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
 			vertexShader->GetBytecodeLength()							// バイトコードのサイズ
-			)
 		);
 	}
 	catch (const _com_error& error) {
@@ -277,26 +244,180 @@ int Game::Run(const WindowSettings& settings)
 		return 0;
 	}
 
-	try {
-		// sharedの時
-		//// テクスチャーを作成
-		//texture = std::make_shared<Texture2D>(
-		//	graphicsDevice,
-		//	4,
-		//	4,
-		//	DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-		//	false
-		//);
+	// 画像データの読み込み
+	// ファクトリーの作成
+	ComPtr<IWICImagingFactory2> factory;
+	hr = CoCreateInstance(
+		CLSID_WICImagingFactory2,
+		NULL, CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&factory));
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
 
-		// uniqueの時
+	// デコードの作成
+	ComPtr<IWICBitmapDecoder> decoder;
+	hr = factory->CreateDecoderFromFilename(
+		L"Sample.png",
+		NULL, GENERIC_READ, WICDecodeOptions::WICDecodeMetadataCacheOnDemand,
+		&decoder);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	// BitMapフレームを取得
+	//UINT frameCount = 0;
+	//hr = decoder->GetFrameCount(&frameCount);
+	//if (FAILED(hr)) {
+	//	throw _com_error(hr);
+	//}
+	ComPtr<IWICBitmapFrameDecode> frame;
+	hr = decoder->GetFrame(0, &frame);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	// FormatConverter
+	ComPtr<IWICFormatConverter> converter;
+	hr = factory->CreateFormatConverter(&converter);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+	hr = converter->Initialize(
+		frame.Get(),
+		GUID_WICPixelFormat32bppRGBA,
+		WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeMedianCut);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	// 出力ストリームを作成
+	ComPtr<IWICStream> outputStream;
+	hr = factory->CreateStream(&outputStream);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+	// 保存先を指定
+	hr = outputStream->InitializeFromFilename(L"Sample.dds", GENERIC_WRITE);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	// DDS対応のエンコーダを作成
+	ComPtr<IWICBitmapEncoder> encoder;
+	hr = factory->CreateEncoder(GUID_ContainerFormatDds, NULL, &encoder);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	hr = encoder->Initialize(outputStream.Get(), WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	ComPtr<IWICBitmapFrameEncode> bitmapEncode;
+	ComPtr<IPropertyBag2> propertyBag;
+	hr = encoder->CreateNewFrame(&bitmapEncode,&propertyBag);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	// IWICDdsEncoderを取得
+	ComPtr<IWICDdsEncoder> ddsEncoder;
+	hr = encoder.As(&ddsEncoder);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	//auto ddsparameters = WICDdsParameters{
+	//	.Width = 4,
+	//	.Height = 4,
+	//	//.Depth = 1,
+	//	//.MipLevels = 3,
+	//	.DxgiFormat = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM,
+	//	//.Dimension = WICDdsDimension::WICDdsTexture2D,
+	//};
+
+	//hr = ddsEncoder->SetParameters(&ddsparameters);
+	//if (FAILED(hr)) {
+	//	throw _com_error(hr);
+	//}
+
+	UINT width = 0;
+	UINT height = 0;
+	hr = converter->GetSize(&width, &height);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	// 画像フォーマットを取得
+	WICPixelFormatGUID wicFormat = {};
+	hr = converter->GetPixelFormat(&wicFormat);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	struct WIC2DXGI_Format
+	{
+		const GUID& wic;
+		DXGI_FORMAT dxgi;
+	};
+
+	// 画像フォーマットからdxgiフォーマットに変換する一覧を作成
+	WIC2DXGI_Format wic2dxgi_formats[] = {
+		{GUID_WICPixelFormat128bppRGBAFloat, DXGI_FORMAT_R32G32B32A32_FLOAT},
+		{GUID_WICPixelFormat64bppRGBAHalf, DXGI_FORMAT_R16G16B16A16_FLOAT},
+		{GUID_WICPixelFormat64bppRGBA, DXGI_FORMAT_R16G16B16A16_UNORM},
+		{GUID_WICPixelFormat32bppRGBA, DXGI_FORMAT_R8G8B8A8_UNORM},
+		{GUID_WICPixelFormat32bppBGRA, DXGI_FORMAT_B8G8R8A8_UNORM},
+		{GUID_WICPixelFormat32bppBGR, DXGI_FORMAT_B8G8R8X8_UNORM},
+		{GUID_WICPixelFormat24bppBGR, DXGI_FORMAT_B8G8R8X8_UNORM},
+		{GUID_WICPixelFormat32bppRGBA1010102XR, DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM},
+		{GUID_WICPixelFormat32bppRGBA1010102, DXGI_FORMAT_R10G10B10A2_UNORM},
+		{GUID_WICPixelFormat32bppRGBE, DXGI_FORMAT_R9G9B9E5_SHAREDEXP},
+		{GUID_WICPixelFormat16bppBGRA5551, DXGI_FORMAT_B5G5R5A1_UNORM},
+		{GUID_WICPixelFormat16bppBGR565, DXGI_FORMAT_B5G6R5_UNORM},
+		{GUID_WICPixelFormat32bppGrayFloat, DXGI_FORMAT_R32_FLOAT},
+		{GUID_WICPixelFormat16bppGrayHalf, DXGI_FORMAT_R16_FLOAT},
+		{GUID_WICPixelFormat16bppGray, DXGI_FORMAT_R16_UNORM},
+		{GUID_WICPixelFormat8bppGray, DXGI_FORMAT_R8_UNORM},
+		{GUID_WICPixelFormat8bppAlpha, DXGI_FORMAT_A8_UNORM},
+		{GUID_WICPixelFormat96bppRGBFloat, DXGI_FORMAT_R32G32B32_FLOAT},
+	};
+
+	// dxgiフォーマットを宣言
+	auto dxgiFormat = DXGI_FORMAT{};
+
+	// dxgiフォーマット一覧から取得した画像フォーマットと同じものを探す
+	for (auto& wic2dxgi_format : wic2dxgi_formats)
+	{
+		if (InlineIsEqualGUID(wicFormat, wic2dxgi_format.wic)) {
+			dxgiFormat = wic2dxgi_format.dxgi;
+		}
+		// ない場合はUNKNOWNとする
+		//dxgiFormat = DXGI_FORMAT_UNKNOWN;
+	}
+
+	const auto bufferSize = width * height * 4;
+	std::unique_ptr<BYTE[]> source = std::make_unique<BYTE[]>(bufferSize);
+	converter->CopyPixels(nullptr, width * 4, width * height * 4, source.get());
+
+	try {
 		// テクスチャーを作成
-		texture.reset(new Texture2D(
+		//texture.reset(new Texture2D(
+		//	graphicsDevice,
+		//	width,
+		//	height,
+		//	dxgiFormat,
+		//	false
+		//	)
+		//);
+		texture = std::make_unique<Texture2D>(
 			graphicsDevice,
-			4,
-			4,
-			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+			width,
+			height,
+			dxgiFormat,
 			false
-			)
 		);
 	}
 	catch (const _com_error& error) {
@@ -308,21 +429,22 @@ int Game::Run(const WindowSettings& settings)
 	}
 
 	// ピクセルデータを更新
-	texture->SetData(source);
+	texture->SetData(source.get());
 
 	// 位置座標
 	XMFLOAT3 position = { 0, 0, 0 };
 	// 回転
 	XMFLOAT4 rotation = {};
-	XMStoreFloat4(&rotation, XMQuaternionIdentity());
+	//XMStoreFloat4(&rotation, XMQuaternionIdentity());
+	XMStoreFloat4(&rotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(-10.0f), XMConvertToRadians(-5.0f), 0));
 	// スケール
 	XMFLOAT3 scale = { 1, 1, 1 };
 
 	// カメラの位置座標
-	constexpr XMFLOAT3 eyePosition = { 0.0f, 1.0f, -5.0f };
+	constexpr XMFLOAT3 eyePosition = { 0.0f, 1.0f, -3.0f };
 	// カメラの回転
 	XMFLOAT4 cameraRotation = {};
-	XMStoreFloat4(&cameraRotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(15.0f), 0, 0));
+	XMStoreFloat4(&cameraRotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(20.0f), 0, 0));
 
 	// ライトの位置座標
 	// 平行光源(w = 0.0f) or 点光源(w = 1.0f)
@@ -351,7 +473,8 @@ int Game::Run(const WindowSettings& settings)
 		// オブジェクトのy軸回転
 		XMStoreFloat4(
 			&rotation,
-			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(0.5f), 0)));
+			//XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(1.0f), 0)));
+			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, 0, 0)));
 		
 		// 定数バッファーを更新
 		// Scaling × Rotation × TranslationをCPU側で計算してシェーダーへ送る(シェーダーでやるより処理が軽いため)

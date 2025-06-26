@@ -11,6 +11,7 @@
 #include <d3d11_4.h>
 #include <DirectXMath.h>
 #include <wrl/client.h>
+#include <wincodec.h>
 
 //=============================================================================
 // ç\ë¢ëÃ

@@ -15,7 +15,7 @@ BasicVertexShader::BasicVertexShader(std::shared_ptr<Graphics> graphics)
 {
 	ComPtr<ID3D11VertexShader> shader;
 	const auto hr = graphics->GetDevice()->CreateVertexShader(
-		g_BasicVertexShader, std::size(g_BasicVertexShader), NULL,
+		g_BasicVertexShader, ARRAYSIZE(g_BasicVertexShader), NULL,
 		&shader);
 	if (FAILED(hr)) {
 		throw _com_error(hr);
@@ -47,7 +47,7 @@ BasicGeometryShader::BasicGeometryShader(std::shared_ptr<Graphics> graphics)
 {
 	ComPtr<ID3D11GeometryShader> shader;
 	const auto hr = graphics->GetDevice()->CreateGeometryShader(
-		g_BasicGeometryShader, std::size(g_BasicGeometryShader), NULL,
+		g_BasicGeometryShader, ARRAYSIZE(g_BasicGeometryShader), NULL,
 		&shader);
 	if (FAILED(hr)) {
 		throw _com_error(hr);
@@ -65,7 +65,7 @@ const BYTE* BasicGeometryShader::GetBytecode()
 // バイトコードのサイズを取得します。
 size_t BasicGeometryShader::GetBytecodeLength()
 {
-	return sizeof g_BasicGeometryShader;
+	return ARRAYSIZE(g_BasicGeometryShader);
 }
 
 // D3D11のネイティブポインターを取得します。
@@ -79,7 +79,7 @@ BasicPixelShader::BasicPixelShader(std::shared_ptr<Graphics> graphics)
 {
 	ComPtr<ID3D11PixelShader> shader;
 	const auto hr = graphics->GetDevice()->CreatePixelShader(
-		g_BasicPixelShader, std::size(g_BasicPixelShader), NULL,
+		g_BasicPixelShader, ARRAYSIZE(g_BasicPixelShader), NULL,
 		&shader);
 	if (FAILED(hr)) {
 		throw _com_error(hr);

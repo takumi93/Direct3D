@@ -140,6 +140,7 @@ SwapChain::SwapChain(
 		if (FAILED(hr)) {
 			throw _com_error(hr);
 		}
+		depthStencil.Reset();
 	}
 
 	// 初期化がすべて成功したらメンバー変数を更新する
