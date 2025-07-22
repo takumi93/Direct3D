@@ -21,9 +21,11 @@ float4 main(PSInput input) : SV_TARGET
     
     float4 texel = diffuseTexture.Sample(diffuseTextureSampler, input.texCoord);
 
-    return float4(texel.rgb + specularColor, MaterialDiffuse.a * texel.a);
-    //return float4(texel.rgb * diffuseColor + specularColor, MaterialDiffuse.a * texel.a);
-    //return float4(texel.rgb * diffuseColor + specularColor, MaterialDiffuse.a * texel.a);
-    //return float4(texel.rgb, MaterialDiffuse.a * texel.a);
+    //return float4(texel.rgb + specularColor, MaterialDiffuse.a * texel.a);
+    
+    
+    return float4(texel.rgb * diffuseColor + specularColor, MaterialDiffuse.a * texel.a);
+    
+    
     //return float4(texel.rgb, 1);
 }

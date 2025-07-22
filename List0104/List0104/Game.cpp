@@ -265,17 +265,23 @@ int Game::Run(const WindowSettings& settings)
 		throw _com_error(hr);
 	}
 
+	//ComPtr<IWICDdsDecoder> ddsDecoder;
+	//hr = decoder.As(&ddsDecoder);
+
 	// BitMapƒtƒŒ[ƒ€‚ðŽæ“¾
-	//UINT frameCount = 0;
-	//hr = decoder->GetFrameCount(&frameCount);
-	//if (FAILED(hr)) {
-	//	throw _com_error(hr);
-	//}
 	ComPtr<IWICBitmapFrameDecode> frame;
 	hr = decoder->GetFrame(0, &frame);
 	if (FAILED(hr)) {
 		throw _com_error(hr);
 	}
+
+	//UINT arrayIndex = 16;
+	//UINT mipLevel = 32;
+	//UINT sliceIndex = 32;
+	//hr = ddsDecoder->GetFrame(arrayIndex, mipLevel, sliceIndex, &frame);
+	//if (FAILED(hr)) {
+	//	throw _com_error(hr);
+	//}
 
 	// FormatConverter
 	ComPtr<IWICFormatConverter> converter;
@@ -329,6 +335,15 @@ int Game::Run(const WindowSettings& settings)
 		throw _com_error(hr);
 	}
 
+	//UINT pAllayIndex;
+	//UINT pMipLevel;
+	//UINT sliceBox;
+
+	//hr = ddsEncoder->CreateNewFrame(&bitmapEncode, &pAllayIndex, &pMipLevel, &sliceBox);
+	//if (FAILED(hr)) {
+	//	throw _com_error(hr);
+	//}
+
 	//auto ddsparameters = WICDdsParameters{
 	//	.Width = 4,
 	//	.Height = 4,
@@ -338,10 +353,26 @@ int Game::Run(const WindowSettings& settings)
 	//	//.Dimension = WICDdsDimension::WICDdsTexture2D,
 	//};
 
-	//hr = ddsEncoder->SetParameters(&ddsparameters);
-	//if (FAILED(hr)) {
-	//	throw _com_error(hr);
-	//}
+	WICDdsParameters ddsparameters;
+
+	hr = ddsEncoder->GetParameters(&ddsparameters);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
+
+	ddsparameters = {
+		.Width = 4,
+		.Height = 4,
+		//.Depth = 1,
+		//.MipLevels = 3,
+		.DxgiFormat = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM,
+		//.Dimension = WICDdsDimension::WICDdsTexture2D,
+	};
+
+	hr = ddsEncoder->SetParameters(&ddsparameters);
+	if (FAILED(hr)) {
+		throw _com_error(hr);
+	}
 
 	UINT width = 0;
 	UINT height = 0;
