@@ -363,10 +363,10 @@ int Game::Run(const WindowSettings& settings)
 	ddsparameters = {
 		.Width = 4,
 		.Height = 4,
-		//.Depth = 1,
-		//.MipLevels = 3,
+		.Depth = 1,
+		.MipLevels = 3,
 		.DxgiFormat = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM,
-		//.Dimension = WICDdsDimension::WICDdsTexture2D,
+		.Dimension = WICDdsDimension::WICDdsTexture2D,
 	};
 
 	hr = ddsEncoder->SetParameters(&ddsparameters);
@@ -467,7 +467,7 @@ int Game::Run(const WindowSettings& settings)
 	// 回転
 	XMFLOAT4 rotation = {};
 	//XMStoreFloat4(&rotation, XMQuaternionIdentity());
-	XMStoreFloat4(&rotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(-10.0f), XMConvertToRadians(-5.0f), 0));
+	XMStoreFloat4(&rotation, XMQuaternionRotationRollPitchYaw(XMConvertToRadians(-10.0f), XMConvertToRadians(-1.0f), 0));
 	// スケール
 	XMFLOAT3 scale = { 1, 1, 1 };
 
@@ -504,7 +504,7 @@ int Game::Run(const WindowSettings& settings)
 		// オブジェクトのy軸回転
 		XMStoreFloat4(
 			&rotation,
-			//XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(1.0f), 0)));
+			//XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, XMConvertToRadians(0.1f), 0)));
 			XMQuaternionMultiply(XMLoadFloat4(&rotation), XMQuaternionRotationRollPitchYaw(0, 0, 0)));
 		
 		// 定数バッファーを更新
