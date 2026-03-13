@@ -2,14 +2,16 @@
 // SwapChain.cpp
 // グラフィックス機能を提供するクラスが含まれます。
 //=============================================================================
-#include "Game.h"
+#include <GameLibrary/Game.h>
+#include <GameLibrary/Utility.h>
 #include <comdef.h>
 
+using namespace GameLibrary;
 using namespace Microsoft::WRL;
 
 // このクラスのインスタンスを初期化します。
 SwapChain::SwapChain(
-	std::shared_ptr<Graphics> graphics, std::shared_ptr<MainWindow> window,
+	std::shared_ptr<Graphics> graphics, HWND window, int width, int height,
 	DXGI_FORMAT swapChainFormat, DXGI_FORMAT depthStencilFormat) 
 {
 	// 関数の実行結果を受け取る変数
@@ -23,8 +25,8 @@ SwapChain::SwapChain(
 
 	// 作成するスワップチェーンについての情報を格納
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-	swapChainDesc.Width = window->GetWidth();
-	swapChainDesc.Height = window->GetHeight();
+	swapChainDesc.Width = width;
+	swapChainDesc.Height = height;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.Stereo = FALSE;
 	swapChainDesc.SampleDesc = { 1, 0 };
@@ -39,7 +41,7 @@ SwapChain::SwapChain(
 
 	// 画面サイズを変える際(全画面表示とか)にスワップチェーンだけ変更する必要があるため
 	//スワップチェーンを作成
-	hr = graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(graphics->GetDevice(), window->GetHandle(), &swapChainDesc, nullptr, nullptr, &swapChain);
+	hr = graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(graphics->GetDevice(), Application::GetWindowHandle(), &swapChainDesc, nullptr, nullptr, &swapChain);
 	if (FAILED(hr)) {
 		throw _com_error(hr);
 	}

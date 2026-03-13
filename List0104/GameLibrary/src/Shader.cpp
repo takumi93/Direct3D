@@ -2,15 +2,19 @@
 // Shaders.cpp
 // 頂点、ジオメトリ、ピクセル他のシェーダーを管理する機能が含まれます。
 //=============================================================================
-#include "Game.h"
-#include <comdef.h>
+#include <GameLibrary/Game.h>
 #include "BasicVertexShader.h"
 #include "BasicGeometryShader.h"
 #include "BasicPixelShader.h"
+#include <comdef.h>
 
+using namespace GameLibrary;
 using namespace Microsoft::WRL;
 
-// このクラスの新しいインスタンスを初期化します。
+/// <summary>
+/// このクラスの新しいインスタンスを初期化します。
+/// </summary>
+/// <param name="graphics"></param>
 BasicVertexShader::BasicVertexShader(std::shared_ptr<Graphics> graphics)
 {
 	ComPtr<ID3D11VertexShader> shader;
@@ -24,25 +28,45 @@ BasicVertexShader::BasicVertexShader(std::shared_ptr<Graphics> graphics)
 	this->shader = shader;
 }
 
-// このシェーダーのバイトコードを取得します。
-const BYTE* BasicVertexShader::GetBytecode()
-{
-	return g_BasicVertexShader;
-}
+///// <summary>
+///// 
+///// </summary>
+//BasicVertexShader::~BasicVertexShader()
+//{
+//
+//}
 
-// バイトコードのサイズを取得します。
-size_t BasicVertexShader::GetBytecodeLength()
-{
-	return sizeof g_BasicVertexShader;
-}
-
-// D3D11のネイティブポインターを取得します。
+/// <summary>
+/// D3D11のネイティブポインターを取得します。
+/// </summary>
+/// <returns></returns>
 ID3D11VertexShader* BasicVertexShader::GetNativePointer()
 {
 	return shader.Get();
 }
 
-// このクラスの新しいインスタンスを初期化します。
+/// <summary>
+/// このシェーダーのバイトコードを取得します。
+/// </summary>
+/// <returns></returns>
+const BYTE* BasicVertexShader::GetBytecode()
+{
+	return g_BasicVertexShader;
+}
+
+/// <summary>
+/// バイトコードのサイズを取得します。
+/// </summary>
+/// <returns></returns>
+SIZE_T BasicVertexShader::GetBytecodeLength()
+{
+	return ARRAYSIZE(g_BasicVertexShader);
+}
+
+/// <summary>
+/// このクラスの新しいインスタンスを初期化します。
+/// </summary>
+/// <param name="graphics"></param>
 BasicGeometryShader::BasicGeometryShader(std::shared_ptr<Graphics> graphics)
 {
 	ComPtr<ID3D11GeometryShader> shader;
@@ -56,25 +80,28 @@ BasicGeometryShader::BasicGeometryShader(std::shared_ptr<Graphics> graphics)
 	this->shader = shader;
 }
 
-// このシェーダーのバイトコードを取得します。
-const BYTE* BasicGeometryShader::GetBytecode()
-{
-	return g_BasicGeometryShader;
-}
+//// デストラクタ―
+///// <summary>
+///// 
+///// </summary>
+//BasicGeometryShader::~BasicGeometryShader()
+//{
+//
+//}
 
-// バイトコードのサイズを取得します。
-size_t BasicGeometryShader::GetBytecodeLength()
-{
-	return ARRAYSIZE(g_BasicGeometryShader);
-}
-
-// D3D11のネイティブポインターを取得します。
+/// <summary>
+/// D3D11のネイティブポインターを取得します。
+/// </summary>
+/// <returns></returns>
 ID3D11GeometryShader* BasicGeometryShader::GetNativePointer()
 {
 	return shader.Get();
 }
 
-// このクラスの新しいインスタンスを初期化します。
+/// <summary>
+/// このクラスの新しいインスタンスを初期化します。
+/// </summary>
+/// <param name="graphics"></param>
 BasicPixelShader::BasicPixelShader(std::shared_ptr<Graphics> graphics)
 {
 	ComPtr<ID3D11PixelShader> shader;
@@ -88,19 +115,19 @@ BasicPixelShader::BasicPixelShader(std::shared_ptr<Graphics> graphics)
 	this->shader = shader;
 }
 
-// このシェーダーのバイトコードを取得します。
-const BYTE* BasicPixelShader::GetBytecode()
-{
-	return g_BasicPixelShader;
-}
+//// デストラクタ―
+///// <summary>
+///// 
+///// </summary>
+//BasicPixelShader::~BasicPixelShader()
+//{
+//
+//}
 
-// バイトコードのサイズを取得します。
-size_t BasicPixelShader::GetBytecodeLength()
-{
-	return sizeof g_BasicPixelShader;
-}
-
-// D3D11のネイティブポインターを取得します。
+/// <summary>
+/// D3D11のネイティブポインターを取得します。
+/// </summary>
+/// <returns></returns>
 ID3D11PixelShader* BasicPixelShader::GetNativePointer()
 {
 	return shader.Get();

@@ -5,6 +5,7 @@ void main(
 	triangle GSInput input[3],
 	inout TriangleStream< GSOutput > output)
 {
+    [unroll]
     for (uint i = 0; i < 3; i++)
     {
         GSOutput element;

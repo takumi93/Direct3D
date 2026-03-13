@@ -2,13 +2,22 @@
 // Textures.cpp
 // 
 //=============================================================================
-#include "Game.h"
+#include <GameLibrary/Game.h>
+#include <GameLibrary/Utility.h>
 #include <comdef.h>
 #include <new>
 
+using namespace GameLibrary;
 using namespace Microsoft::WRL;
 
-// このクラスの新しいインスタンスを作成します。
+/// <summary>
+/// このクラスの新しいインスタンスを作成します。
+/// </summary>
+/// <param name="graphicsDevice"></param>
+/// <param name="width"></param>
+/// <param name="height"></param>
+/// <param name="format"></param>
+/// <param name="mipChain"></param>
 Texture2D::Texture2D(
 	ID3D11Device* graphicsDevice,
 	UINT width, UINT height, DXGI_FORMAT format, bool mipChain)
@@ -73,13 +82,18 @@ Texture2D::Texture2D(
 	}
 }
 
-//// リソースを解放します。
+///// <summary>
+///// リソースを解放します。
+///// </summary>
 //Texture2D::~Texture2D()
 //{
 //
 //}
 
-// テクスチャーのピクセルを変更します。
+/// <summary>
+/// テクスチャーのピクセルを変更します。
+/// </summary>
+/// <param name="data"></param>
 void Texture2D::SetData(const void* data)
 {
 	ComPtr<ID3D11Device> device;
@@ -89,7 +103,10 @@ void Texture2D::SetData(const void* data)
 	context->UpdateSubresource(texture.Get(), 0, nullptr, data, 4 * sizeof(uint32_t), 0);
 }
 
-// D3D11のネイティブポインターを取得します。
+/// <summary>
+/// D3D11のネイティブポインターを取得します。
+/// </summary>
+/// <returns></returns>
 ID3D11Texture2D* Texture2D::GetNativePointer()
 {
 	return texture.Get();
