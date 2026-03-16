@@ -138,7 +138,7 @@ void Graphics::InitGraphicsDevice() {
 	//currentAdapter.Reset();
 
 	// DXGIデバイスを継承
-	ComPtr<IDXGIDevice1> dxgiDevice;
+	ComPtr<IDXGIDevice4> dxgiDevice;
 
 	// D3D11デバイスを継承
 	ComPtr<ID3D11Device> currentDevice;

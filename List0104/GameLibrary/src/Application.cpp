@@ -1,5 +1,7 @@
 #include <GameLibrary/Game.h>
 #include <GameLibrary/Utility.h>
+#include <GameLibrary/Input.h>
+#include <GameLibrary/Time.h>
 
 using namespace GameLibrary;
 
@@ -96,15 +98,24 @@ int Application::Run(Game* game, HINSTANCE hInstance, int nShowCmd) noexcept
 
 	try {
 		InitializeWindow(game, hInstance, nShowCmd);
+		Input::Initialize(hInstance, GetWindowHandle());
+		Time::Initialize();
 	}
 	catch (const std::system_error& error) {
 		MessageBoxA(s_hWnd, error.what(), "ERROR: ウィンドウを初期化できませんでした", MB_OK | MB_ICONERROR);
+		return 0;
+	}
+	catch (const _com_error& error) {
+		MessageBox(s_hWnd, error.ErrorMessage(), TEXT("ERROR: ウィンドウを初期化できませんでした"), MB_OK | MB_ICONERROR);
 		return 0;
 	}
 
 	// メッセージ ループ
 	MSG msg = {};
 	while (msg.message != WM_QUIT) {
+		Input::Update();
+		Time::Update();
+
 		// メッセージ処理
 		if (PeekMessageW(&msg, NULL, 0, 0, PM_NOREMOVE)) {
 			const auto getMessage = GetMessageW(&msg, NULL, 0, 0);
@@ -129,6 +140,8 @@ int Application::Run(Game* game, HINSTANCE hInstance, int nShowCmd) noexcept
 	}
 
 	game->Release();
+	Input::Shutdown();
+	Time::Shutdown();
 
 	if (!UnregisterClassW(MAKEINTATOM(s_ClassAtom), hInstance)) {
 		OutputLastError();

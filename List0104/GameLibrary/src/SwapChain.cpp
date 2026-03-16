@@ -11,138 +11,152 @@ using namespace Microsoft::WRL;
 
 // このクラスのインスタンスを初期化します。
 SwapChain::SwapChain(
-	std::shared_ptr<Graphics> graphics, HWND window, int width, int height,
-	DXGI_FORMAT swapChainFormat, DXGI_FORMAT depthStencilFormat) 
+	std::shared_ptr<Graphics> graphics, HWND window, int width, int height) 
 {
-	// 関数の実行結果を受け取る変数
-	HRESULT hr = S_OK;
-
-	ComPtr<IDXGISwapChain1> swapChain;
-	ComPtr<ID3D11RenderTargetView> renderTargetView;
-	ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
-	ComPtr<ID3D11DepthStencilView> depthStencilView;
-	ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
+	ComPtr<IDXGISwapChain1> currentSwapChain;
+	ComPtr<ID3D11Device5> device;
+	graphics->GetDevice()->QueryInterface(IID_PPV_ARGS(&device));
 
 	// 作成するスワップチェーンについての情報を格納
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-	swapChainDesc.Width = width;
-	swapChainDesc.Height = height;
-	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.Stereo = FALSE;
-	swapChainDesc.SampleDesc = { 1, 0 };
-	swapChainDesc.BufferUsage =
-		DXGI_USAGE_RENDER_TARGET_OUTPUT |
-		DXGI_USAGE_SHADER_INPUT;	// シェーダーリソースとして使用することを設定
-	swapChainDesc.BufferCount = 2;
-	swapChainDesc.Scaling = DXGI_SCALING::DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_UNSPECIFIED;
-	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+	const auto swapChainDesc = DXGI_SWAP_CHAIN_DESC1{
+		.Width = static_cast<UINT>(width),
+		.Height = static_cast<UINT>(height),
+
+		//.Format = DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT,
+		//.Format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM,
+		.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM,
+		//.Format = DXGI_FORMAT::DXGI_FORMAT_R10G10B10A2_UNORM,
+
+		.Stereo = FALSE,
+		.SampleDesc = {.Count = 1, .Quality = 0 },
+		.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+		.BufferCount = 2,
+
+		//.Scaling = DXGI_SCALING::DXGI_SCALING_STRETCH,
+		.Scaling = DXGI_SCALING::DXGI_SCALING_NONE,
+		//.Scaling = DXGI_SCALING::DXGI_SCALING_ASPECT_RATIO_STRETCH,
+
+		.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_DISCARD,
+		.AlphaMode = DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_UNSPECIFIED,
+		.Flags = 0,
+	};
 
 	// 画面サイズを変える際(全画面表示とか)にスワップチェーンだけ変更する必要があるため
 	//スワップチェーンを作成
-	hr = graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(graphics->GetDevice(), Application::GetWindowHandle(), &swapChainDesc, nullptr, nullptr, &swapChain);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
+	ThrowIfFailed(graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(
+		graphics->GetDevice(), Application::GetWindowHandle(), 
+		&swapChainDesc, nullptr, nullptr, 
+		&currentSwapChain));
+
+	ThrowIfFailed(currentSwapChain.As(&swapChain));
 
 	// バックバッファーを取得
 	{
-		ComPtr<ID3D11Texture2D> backBuffer;
-		hr = swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-		//失敗したら処理しない
-		if (FAILED(hr)) {
-			throw _com_error(hr);
+		ComPtr<ID3D11Texture2D1> backBuffer;
+		ThrowIfFailed(swapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer)));
+
+		auto backBufferDesc = D3D11_TEXTURE2D_DESC1{};
+		backBuffer->GetDesc1(&backBufferDesc);
+		// レンダー ターゲット
+		auto format = DXGI_FORMAT{};
+		switch (backBufferDesc.Format) {
+		case DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM:
+			format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+			break;
+		case DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM:
+			format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+			break;
+		case DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT:
+		case DXGI_FORMAT::DXGI_FORMAT_R10G10B10A2_UNORM:
+		default:
+			format = backBufferDesc.Format;
+			break;
 		}
+		const auto renderTargetViewDesc = D3D11_RENDER_TARGET_VIEW_DESC1{
+			.Format = format,
+			.ViewDimension = D3D11_RTV_DIMENSION::D3D11_RTV_DIMENSION_TEXTURE2D,
+			.Texture2D = {.MipSlice = 0, .PlaneSlice = 0, },
+		};
+
 		// バックバッファーにアクセスするためのレンダーターゲット ビューを作成
-		hr = graphics->GetDevice()->CreateRenderTargetView(backBuffer.Get(), NULL, &renderTargetView);
-		//失敗したら処理しない
-		if (FAILED(hr)) {
-			throw _com_error(hr);
-		}
-		// バックバッファーにシェーダーからアクセスするためのリソース ビューを作成
-		hr = graphics->GetDevice()->CreateShaderResourceView(backBuffer.Get(), NULL, &renderTargetResourceView);
-		//失敗したら処理しない
-		if (FAILED(hr)) {
-			throw _com_error(hr);
-		}
+		ThrowIfFailed(device->CreateRenderTargetView1(backBuffer.Get(), &renderTargetViewDesc, &renderTargetView));
+		backBuffer.Reset();
 	}
 
-	// テクスチャとシェーダーリソースビューのフォーマットを設定
-	DXGI_FORMAT textureFormat = depthStencilFormat;
-	DXGI_FORMAT resourceFormat = depthStencilFormat;
-	//設定したフォーマットをテクスチャとリソース用に入れ替え
-	switch (depthStencilFormat)
-	{
-	case DXGI_FORMAT_D16_UNORM:
-		textureFormat = DXGI_FORMAT_R16_TYPELESS;
-		resourceFormat = DXGI_FORMAT_R16_UNORM;
-		break;
-	case DXGI_FORMAT_D24_UNORM_S8_UINT:
-		textureFormat = DXGI_FORMAT_R24G8_TYPELESS;
-		resourceFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-		break;
-	case DXGI_FORMAT_D32_FLOAT:
-		textureFormat = DXGI_FORMAT_R32_TYPELESS;
-		resourceFormat = DXGI_FORMAT_R32_FLOAT;
-		break;
-	case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-		textureFormat = DXGI_FORMAT_R32G8X24_TYPELESS;
-		resourceFormat = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-		break;
-	}
+	//// テクスチャとシェーダーリソースビューのフォーマットを設定
+	//DXGI_FORMAT textureFormat = depthStencilFormat;
+	//DXGI_FORMAT resourceFormat = depthStencilFormat;
+	////設定したフォーマットをテクスチャとリソース用に入れ替え
+	//switch (depthStencilFormat)
+	//{
+	//case DXGI_FORMAT_D16_UNORM:
+	//	textureFormat = DXGI_FORMAT_R16_TYPELESS;
+	//	resourceFormat = DXGI_FORMAT_R16_UNORM;
+	//	break;
+	//case DXGI_FORMAT_D24_UNORM_S8_UINT:
+	//	textureFormat = DXGI_FORMAT_R24G8_TYPELESS;
+	//	resourceFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	//	break;
+	//case DXGI_FORMAT_D32_FLOAT:
+	//	textureFormat = DXGI_FORMAT_R32_TYPELESS;
+	//	resourceFormat = DXGI_FORMAT_R32_FLOAT;
+	//	break;
+	//case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+	//	textureFormat = DXGI_FORMAT_R32G8X24_TYPELESS;
+	//	resourceFormat = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+	//	break;
+	//}
+
 	// 深度ステンシルを作成
 	{
-		ComPtr<ID3D11Texture2D> depthStencil;
-		D3D11_TEXTURE2D_DESC depthStencilDesc = {};
-		depthStencilDesc.Width = swapChainDesc.Width;
-		depthStencilDesc.Height = swapChainDesc.Height;
-		depthStencilDesc.MipLevels = 1;
-		depthStencilDesc.ArraySize = 1;
-		depthStencilDesc.Format = textureFormat;
-		depthStencilDesc.SampleDesc = swapChainDesc.SampleDesc;
-		depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-		depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; // シェーダーリソースとして使用することを設定
-		depthStencilDesc.CPUAccessFlags = 0;
-		depthStencilDesc.MiscFlags = 0;
-		hr = graphics->GetDevice()->CreateTexture2D(&depthStencilDesc, NULL, &depthStencil);
-		//失敗したら処理しない
-		if (FAILED(hr)) {
-			throw _com_error(hr);
-		}
+		ComPtr<ID3D11Texture2D1> depthStencilBuffer;
+		const auto depthStencilDesc = D3D11_TEXTURE2D_DESC1{
+			.Width = swapChainDesc.Width,
+			.Height = swapChainDesc.Height,
+			.MipLevels = 1,
+			.ArraySize = 1,
+			.Format = DXGI_FORMAT::DXGI_FORMAT_R32G8X24_TYPELESS,
+			.SampleDesc = swapChainDesc.SampleDesc,
+			.Usage = D3D11_USAGE_DEFAULT,
+			.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, // シェーダーリソースとして使用することを設定
+			.CPUAccessFlags = 0,
+			.MiscFlags = 0,
+			.TextureLayout = D3D11_TEXTURE_LAYOUT_UNDEFINED,
+		};
+		ThrowIfFailed(device->CreateTexture2D1(&depthStencilDesc, NULL, &depthStencilBuffer));
+
 		// 深度ステンシルにアクセスするためのビューを作成
-		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
-		depthStencilViewDesc.Format = depthStencilFormat;
-		if (depthStencilDesc.SampleDesc.Count > 0) {
-			depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-		}
-		else {
-			depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-			depthStencilViewDesc.Texture2D.MipSlice = 0;
-		}
-		depthStencilViewDesc.Texture2D.MipSlice = 0;
-		hr = graphics->GetDevice()->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, &depthStencilView);
-		//失敗したら処理しない
-		if (FAILED(hr)) {
-			throw _com_error(hr);
-		}
+		const auto depthStencilViewDesc = D3D11_DEPTH_STENCIL_VIEW_DESC{
+			.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+			.ViewDimension = D3D11_DSV_DIMENSION::D3D11_DSV_DIMENSION_TEXTURE2D,
+			.Flags = 0,
+			.Texture2D = {
+				.MipSlice = 0, },
+			};
+		ThrowIfFailed(device->CreateDepthStencilView(depthStencilBuffer.Get(), &depthStencilViewDesc, &depthStencilView));
+
 		// 深度ステンシルにシェーダーからアクセスするためのリソース ビューを作成
-		D3D11_SHADER_RESOURCE_VIEW_DESC depthStencilResourceViewDesc = {};
-		depthStencilResourceViewDesc.Format = resourceFormat;
-		if (depthStencilDesc.SampleDesc.Count > 0) {
-			depthStencilResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
-		}
-		else {
-			depthStencilResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			depthStencilResourceViewDesc.Texture2D.MostDetailedMip = 0;
-			depthStencilResourceViewDesc.Texture2D.MipLevels = 1;
-		}
-		hr = graphics->GetDevice()->CreateShaderResourceView(depthStencil.Get(), &depthStencilResourceViewDesc, &depthStencilResourceView);
-		//失敗したら処理しない
-		if (FAILED(hr)) {
-			throw _com_error(hr);
-		}
-		depthStencil.Reset();
+		const auto depthSRV_Desc = D3D11_SHADER_RESOURCE_VIEW_DESC1{
+			.Format = DXGI_FORMAT::DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS,
+			.ViewDimension = D3D11_SRV_DIMENSION::D3D11_SRV_DIMENSION_TEXTURE2D,
+			.Texture2D = {
+				.MostDetailedMip = 0,
+				.MipLevels = 1,
+				.PlaneSlice = 0, }
+		};
+		ThrowIfFailed(device->CreateShaderResourceView1(depthStencilBuffer.Get(), &depthSRV_Desc, &depthShaderResourceView));
+		
+		const auto stencilSRV_Desc = D3D11_SHADER_RESOURCE_VIEW_DESC1{
+			.Format = DXGI_FORMAT::DXGI_FORMAT_X32_TYPELESS_G8X24_UINT,
+			.ViewDimension = D3D11_SRV_DIMENSION::D3D11_SRV_DIMENSION_TEXTURE2D,
+			.Texture2D = {
+				.MostDetailedMip = 0,
+				.MipLevels = 1,
+				.PlaneSlice = 0, }
+		};
+		ThrowIfFailed(device->CreateShaderResourceView1(depthStencilBuffer.Get(), &stencilSRV_Desc, &stencilShaderResourceView));
+
+		depthStencilBuffer.Reset();
 	}
 
 	// 初期化がすべて成功したらメンバー変数を更新する
@@ -150,9 +164,9 @@ SwapChain::SwapChain(
 	this->window = window;
 	this->swapChain = swapChain;
 	this->renderTargetView = renderTargetView;
-	this->renderTargetResourceView = renderTargetResourceView;
 	this->depthStencilView = depthStencilView;
-	this->depthStencilResourceView = depthStencilResourceView;
+	this->depthShaderResourceView = depthShaderResourceView;
+	this->stencilShaderResourceView = stencilShaderResourceView;
 }
 
 // ID3D11RenderTargetView を取得します。
@@ -170,9 +184,5 @@ ID3D11DepthStencilView* SwapChain::GetDepthStencilView()
 // バックバッファーに描画したイメージをディスプレイに表示します。
 void SwapChain::Present(UINT syncInterval)
 {
-	const auto hr = swapChain->Present(syncInterval, 0);
-	if (FAILED(hr))
-	{
-		throw _com_error(hr);
-	}
+	ThrowIfFailed(swapChain->Present(syncInterval, 0));
 }

@@ -12,7 +12,6 @@
 #include <d3d11_4.h>
 #include <DirectXMath.h>
 #include <wrl/client.h>
-#include <wincodec.h>
 
 namespace GameLibrary {
 
@@ -91,30 +90,6 @@ namespace GameLibrary {
 	// 
 	//=============================================================================
 
-		// メイン ウィンドウを表します。
-	class MainWindow
-	{
-	public:
-		// このクラスのインスタンスを初期化します。
-		MainWindow(const ProjectSettings& settings = ProjectSettings());
-		virtual ~MainWindow() = default;
-
-		// このウィンドウの幅を取得します。
-		int GetWidth() const;
-		// このウィンドウの高さを取得します。
-		int GetHeight() const;
-		// このウィンドウのハンドルを取得します。
-		HWND GetHandle() const;
-
-	private:
-		// このウィンドウのメッセージを処理します。
-		static LRESULT CALLBACK WindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
-
-		ProjectSettings settings;
-		// ウィンドウのハンドル
-		HWND handle = NULL;
-	};
-
 	// グラフィックス機能を表します。
 	class Graphics final
 	{
@@ -141,7 +116,7 @@ namespace GameLibrary {
 		// DXGI 1.1のアダプター
 		Microsoft::WRL::ComPtr<IDXGIAdapter4> dxgiAdapter;
 		// DXGI 1.1のデバイス
-		Microsoft::WRL::ComPtr<IDXGIDevice1> dxgiDevice;
+		Microsoft::WRL::ComPtr<IDXGIDevice4> dxgiDevice;
 		// Direct3D 11のデバイス
 		Microsoft::WRL::ComPtr<ID3D11Device5> graphicsDevice;
 		// Direct3D 11のデバイス コンテキスト
@@ -211,8 +186,7 @@ namespace GameLibrary {
 	{
 	public:
 		// このクラスの新しいインスタンスを初期化します。
-		VertexBuffer(std::shared_ptr<Graphics> graphics, 
-					UINT byteWidth);
+		VertexBuffer(std::shared_ptr<Graphics> graphics, UINT byteWidth);
 
 		~VertexBuffer() = default;
 
@@ -288,9 +262,7 @@ namespace GameLibrary {
 	{
 	public:
 		// このクラスのインスタンスを初期化します。
-		SwapChain(std::shared_ptr<Graphics> graphics, HWND hWnd, int width, int height,
-			DXGI_FORMAT swapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM,
-			DXGI_FORMAT depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
+		SwapChain(std::shared_ptr<Graphics> graphics, HWND hWnd, int width, int height);
 		~SwapChain() = default;
 
 		// ID3D11RenderTargetView を取得します。
@@ -304,14 +276,19 @@ namespace GameLibrary {
 	private:
 		// 継承
 		std::shared_ptr<Graphics> graphics;
-		//std::shared_ptr<MainWindow> window;
+		
 		HWND window = nullptr;
 
-		Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain;
-		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> renderTargetResourceView;
+		// スワップチェーン
+		Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain;
+		// レンダーターゲット
+		Microsoft::WRL::ComPtr<ID3D11RenderTargetView1> renderTargetView;
+		// 深度ステンシル
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> depthStencilResourceView;
+		// 深度バッファーをシェーダーで利用するためのリソース ビュー
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView1> depthShaderResourceView;
+		// ステンシル バッファーをシェーダーで利用するためのリソース ビュー
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView1> stencilShaderResourceView;
 	};
 
 	class Texture2D

@@ -96,7 +96,7 @@ void Game::Initialize(HWND hWnd)
 		// グラフィックデバイスを作成
 		graphics = std::make_shared<Graphics>();
 		// スワップチェーンを作成
-		swapChain.reset(new SwapChain(graphics, window, width, height));
+		swapChain = std::make_unique<SwapChain>(graphics, window, width, height);
 
 		// ビューポート
 		viewports[0].Width = static_cast<FLOAT>(width);
