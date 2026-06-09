@@ -273,11 +273,15 @@ namespace GameLibrary {
 		// バックバッファーに描画したイメージをディスプレイに表示します。
 		void Present(UINT syncInterval);
 
+		DXGI_SWAP_CHAIN_DESC1* GetSwapChainDesc();
+
 	private:
 		// 継承
 		std::shared_ptr<Graphics> graphics;
 		
 		HWND window = nullptr;
+
+		DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
 
 		// スワップチェーン
 		Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain;
@@ -335,11 +339,6 @@ namespace GameLibrary {
 		virtual void OnRender() noexcept {}
 		virtual void OnRelease() noexcept {}
 
-	private:
-		std::wstring title = L"Game Title";
-		int width = 640;
-		int height = 480;
-
 		// メインウィンドウ
 		HWND window = nullptr;
 		// グラフィックス機能
@@ -350,49 +349,62 @@ namespace GameLibrary {
 		// Direct3D 11のデバイス コンテキスト
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
 
+	private:
+		std::wstring title = L"Game Title";
+		int width = 640;
+		int height = 480;
+
 		// 画面クリアーに使用するカラー
 		DirectX::XMVECTORF32 clearColor = { 0 / 255.0f, 99 / 255.0f, 181 / 255.0f, 1.0f };
+
 		// ビューポート
-		D3D11_VIEWPORT viewports[1] = {};
-
-		// 定数バッファーを介してシェーダーに毎フレーム送る行列データを表します。
-		struct MatricesPerFrame {
-			DirectX::XMFLOAT4X4 worldMatrix;
-			DirectX::XMFLOAT4X4 viewMatrix;
-			DirectX::XMFLOAT4X4 projectionMatrix;
-			DirectX::XMFLOAT4X4 worldViewProjectionMatrix;
-
-			// カメラの位置座標
-			DirectX::XMFLOAT4 viewPosition = DirectX::XMFLOAT4(0, 1, -10, 1);
-
-			// ライトの位置座標(平行光源 w = 0, 点光源 w = 1)
-			DirectX::XMFLOAT4 lightPosition = DirectX::XMFLOAT4(1.0f, 2.0f, -2.0f, 1.0f);
-
-			// マテリアルの表面カラー
-			DirectX::XMFLOAT4 materialDiffuse = DirectX::XMFLOAT4(1, 1, 0, 1);
-
-			// 鏡面反射の色(r, g, b) = (x, y, z)
-			DirectX::XMFLOAT3 materialSpecularColor = DirectX::XMFLOAT3(1, 1, 1);
-			// 鏡面反射の強さ(float) = w
-			float materialSpecularPower = 1;
+		D3D11_VIEWPORT viewport = {
+			.TopLeftX = 0,
+			.TopLeftY = 0,
+			.Width = 0,
+			.Height = 0,
+			.MinDepth = 0.0f,
+			.MaxDepth = 1.0f,
 		};
 
-		// 自分で作ったクラスはunique or shared、既存のクラスはComptr
-		// バッファー
-		std::unique_ptr<VertexBuffer> vertexBuffer;
-		std::unique_ptr<IndexBuffer> indexBuffer;
-		// インデックスの数
-		UINT indexCount = 0;
-		// 定数バッファー
-		std::unique_ptr<ConstantBuffer> constantBuffer;
-		// シェーダー
-		std::unique_ptr<BasicVertexShader> vertexShader;
-		std::unique_ptr<BasicGeometryShader> geometryShader;
-		std::unique_ptr<BasicPixelShader> pixelShader;
-		// 入力レイアウト
-		std::unique_ptr<InputLayout> inputLayout;
-		// テクスチャー
-		std::unique_ptr<Texture2D> texture;
+		//// 定数バッファーを介してシェーダーに毎フレーム送る行列データを表します。
+		//struct MatricesPerFrame {
+		//	DirectX::XMFLOAT4X4 worldMatrix;
+		//	DirectX::XMFLOAT4X4 viewMatrix;
+		//	DirectX::XMFLOAT4X4 projectionMatrix;
+		//	DirectX::XMFLOAT4X4 worldViewProjectionMatrix;
+
+		//	// カメラの位置座標
+		//	DirectX::XMFLOAT4 viewPosition = DirectX::XMFLOAT4(0, 1, -10, 1);
+
+		//	// ライトの位置座標(平行光源 w = 0, 点光源 w = 1)
+		//	DirectX::XMFLOAT4 lightPosition = DirectX::XMFLOAT4(1.0f, 2.0f, -2.0f, 1.0f);
+
+		//	// マテリアルの表面カラー
+		//	DirectX::XMFLOAT4 materialDiffuse = DirectX::XMFLOAT4(1, 1, 0, 1);
+
+		//	// 鏡面反射の色(r, g, b) = (x, y, z)
+		//	DirectX::XMFLOAT3 materialSpecularColor = DirectX::XMFLOAT3(1, 1, 1);
+		//	// 鏡面反射の強さ(float) = w
+		//	float materialSpecularPower = 1;
+		//};
+
+		//// 自分で作ったクラスはunique or shared、既存のクラスはComptr
+		//// バッファー
+		//std::unique_ptr<VertexBuffer> vertexBuffer;
+		//std::unique_ptr<IndexBuffer> indexBuffer;
+		//// インデックスの数
+		//UINT indexCount = 0;
+		//// 定数バッファー
+		//std::unique_ptr<ConstantBuffer> constantBuffer;
+		//// シェーダー
+		//std::unique_ptr<BasicVertexShader> vertexShader;
+		//std::unique_ptr<BasicGeometryShader> geometryShader;
+		//std::unique_ptr<BasicPixelShader> pixelShader;
+		//// 入力レイアウト
+		//std::unique_ptr<InputLayout> inputLayout;
+		//// テクスチャー
+		//std::unique_ptr<Texture2D> texture;
 	};
 
 	class Application final

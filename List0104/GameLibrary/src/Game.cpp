@@ -19,68 +19,6 @@ using namespace GameLibrary;
 using namespace DirectX;
 using namespace Microsoft::WRL;
 
-namespace {
-	// 頂点データの配列
-	VertexPositionNormalTexture vertices[] = {
-		// Front
-		{ { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f } },
-		{ {-1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f } },
-		{ { 1.0f,-1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f } },
-		{ {-1.0f,-1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-		// Back
-		{ {-1.0f, 1.0f,-1.0f }, { 0.0f, 0.0f,-1.0f }, { 0.0f, 0.0f } },
-		{ { 1.0f, 1.0f,-1.0f }, { 0.0f, 0.0f,-1.0f }, { 1.0f, 0.0f } },
-		{ {-1.0f,-1.0f,-1.0f }, { 0.0f, 0.0f,-1.0f }, { 0.0f, 1.0f } },
-		{ { 1.0f,-1.0f,-1.0f }, { 0.0f, 0.0f,-1.0f }, { 1.0f, 1.0f } },
-		// Right
-		{ { 1.0f, 1.0f,-1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-		{ { 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
-		{ { 1.0f,-1.0f,-1.0f }, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
-		{ { 1.0f,-1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
-		// Left
-		{ {-1.0f, 1.0f, 1.0f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } },
-		{ {-1.0f, 1.0f,-1.0f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } },
-		{ {-1.0f,-1.0f, 1.0f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f } },
-		{ {-1.0f,-1.0f,-1.0f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f } },
-		// UP
-		{ {-1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f } },
-		{ { 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f } },
-		{ {-1.0f, 1.0f,-1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } },
-		{ { 1.0f, 1.0f,-1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } },
-		// DOWN
-		{ { 1.0f,-1.0f, 1.0f }, { 0.0f,-1.0f, 0.0f }, { 0.0f, 0.0f } },
-		{ {-1.0f,-1.0f, 1.0f }, { 0.0f,-1.0f, 0.0f }, { 1.0f, 0.0f } },
-		{ { 1.0f,-1.0f,-1.0f }, { 0.0f,-1.0f, 0.0f }, { 0.0f, 1.0f } },
-		{ {-1.0f,-1.0f,-1.0f }, { 0.0f,-1.0f, 0.0f }, { 1.0f, 1.0f } },
-	};
-	// インデックスデータの配列
-	UINT32 indices[] = {
-		 0,  1,  2,  3,  2,  1,	// Front
-		 4,  5,  6,  7,  6,  5,	// Back
-		 8,  9, 10, 11, 10,  9,	// Right
-		12, 13, 14, 15, 14, 13,	// Left
-		16, 17, 18, 19, 18, 17,	// Top
-		20, 21, 22, 23, 22, 21,	// Bottom
-	};
-
-
-	//// 画像データのダミー
-	//constexpr uint32_t source[16] = {
-	//	0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
-	//	0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
-	//	0xFF0000FF, 0xFF000000, 0xFF0000FF, 0xFF000000,
-	//	0xFF000000, 0xFF0000FF, 0xFF000000, 0xFF0000FF,
-	//};
-
-	//// 画像データのダミー
-	//constexpr uint8_t source[][4] = {
-	//	{0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF},
-	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
-	//	{0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF},
-	//	{0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF}, {0x00, 0x00, 0x00, 0xFF}, {0xFF, 0xFF, 0x00, 0xFF},
-	//};
-}
-
 Game::Game(const ProjectSettings& settings)
 	: title(settings.Title), width(settings.Width), height(settings.Height)
 {
@@ -99,12 +37,14 @@ void Game::Initialize(HWND hWnd)
 		swapChain = std::make_unique<SwapChain>(graphics, window, width, height);
 
 		// ビューポート
-		viewports[0].Width = static_cast<FLOAT>(width);
-		viewports[0].Height = static_cast<FLOAT>(height);
-		viewports[0].MinDepth = 0.0f;
-		viewports[0].MaxDepth = 1.0f;
-		viewports[0].TopLeftX = 0.0f;
-		viewports[0].TopLeftY = 0.0f;
+		viewport = {
+		.TopLeftX = 0.0f,
+		.TopLeftY = 0.0f,
+		.Width = static_cast<FLOAT>(swapChain->GetSwapChainDesc()->Width),
+		.Height = static_cast<FLOAT>(swapChain->GetSwapChainDesc()->Height),
+		.MinDepth = D3D11_MIN_DEPTH,
+		.MaxDepth = D3D11_MAX_DEPTH,
+		};
 	}
 	catch (const std::exception& error) {
 		OutputDebugStringA("ERROR: ");
@@ -124,9 +64,6 @@ void Game::Initialize(HWND hWnd)
 	HRESULT hr = S_OK;
 	const auto graphicsDevice = graphics->GetDevice();
 	immediateContext = graphics->GetDeviceContext();
-
-
-	indexCount = static_cast<UINT>(std::size(indices));
 
 	try {
 		// 頂点バッファーを作成
@@ -148,290 +85,10 @@ void Game::Initialize(HWND hWnd)
 		return;
 	}
 
-	// 定数バッファーを介してシェーダーに毎フレーム送るデータを表します。
-	struct ConstantBufferPerFrame
-	{
-		DirectX::XMFLOAT4X4 worldMatrix;		// ワールド変換行列(スケール回転移動を統合)
-		DirectX::XMFLOAT4X4 viewMatrix;			// ビュー変換行列
-		DirectX::XMFLOAT4X4 projectionMatrix;	// プロジェクション変換行列
-		DirectX::XMFLOAT4X4 wvpMatrix;			// ワールド×ビュー×プロジェクション変換行列
-		DirectX::XMFLOAT4 materialColor;		// カラー
-
-		// カメラの位置座標
-		DirectX::XMFLOAT4 viewPosition = DirectX::XMFLOAT4(0, 1, -10, 1);
-
-		// ライトの位置座標(平行光源 w = 0, 点光源 w = 1)
-		DirectX::XMFLOAT4 lightPosition = DirectX::XMFLOAT4(1.0f, 2.0f, -2.0f, 1.0f);
-
-		// マテリアルの表面カラー
-		DirectX::XMFLOAT4 materialDiffuse = DirectX::XMFLOAT4(1, 1, 0, 1);
-
-		// 鏡面反射の色(r, g, b) = (x, y, z)
-		DirectX::XMFLOAT3 materialSpecularColor = DirectX::XMFLOAT3(1, 1, 1);
-		// 鏡面反射の強さ(float) = w
-		float materialSpecularPower = 2;
-	};
-
-	ConstantBufferPerFrame constantBufferPerFrame = {};
-
-	// バッファーを作成
-	try {
-		// 定数バッファーを作成
-		//constantBuffer.reset(new ConstantBuffer(graphics, sizeof constantBufferPerFrame));
-		constantBuffer = std::make_unique<ConstantBuffer>(graphics, sizeof constantBufferPerFrame);
-	}
-	catch (const _com_error& error) {
-		OutputDebugString(TEXT("ERROR: "));
-		OutputDebugString(error.ErrorMessage());
-		OutputDebugString(TEXT("\n"));
-		MessageBox(NULL, TEXT("定数バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
-		return;
-	}
-
-	// 定数バッファーを更新
-	XMStoreFloat4x4(&constantBufferPerFrame.worldMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&constantBufferPerFrame.viewMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&constantBufferPerFrame.projectionMatrix, XMMatrixIdentity());
-	XMStoreFloat4x4(&constantBufferPerFrame.wvpMatrix, XMMatrixIdentity());
 	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
 	constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
-	constantBuffer->SetData(&constantBufferPerFrame);
 
-	try {
-		// シェーダーを作成
-		//vertexShader.reset(new BasicVertexShader(graphics));
-		//geometryShader.reset(new BasicGeometryShader(graphics));
-		//pixelShader.reset(new BasicPixelShader(graphics));
-		vertexShader = std::make_unique<BasicVertexShader>(graphics);
-		geometryShader = std::make_unique<BasicGeometryShader>(graphics);
-		pixelShader = std::make_unique<BasicPixelShader>(graphics);
-	}
-	catch (const _com_error& error) {
-		OutputDebugString(TEXT("ERROR: "));
-		OutputDebugString(error.ErrorMessage());
-		OutputDebugString(TEXT("\n"));
-		MessageBox(NULL, TEXT("シェーダーを作成できませんでした。"), TEXT("エラー"), MB_OK);
-		return;
-	}
-
-	try {
-		// 入力レイアウトを作成
-		//inputLayout.reset(new InputLayout(
-		//	graphicsDevice,												// 使用するグラフィックデバイス
-		//	VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
-		//	std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
-		//	vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
-		//	vertexShader->GetBytecodeLength()							// バイトコードのサイズ
-		//	)
-		//);
-
-		inputLayout = std::make_unique<InputLayout>(
-			graphicsDevice,												// 使用するグラフィックデバイス
-			VertexPositionNormalTexture::inputElementDescs, 			// 入力要素についての記述
-			std::size(VertexPositionNormalTexture::inputElementDescs),	// inputElementDescs配列の数
-			vertexShader->GetBytecode(),								// 入力を受け取る頂点シェーダーのバイトコード
-			vertexShader->GetBytecodeLength()							// バイトコードのサイズ
-		);
-	}
-	catch (const _com_error& error) {
-		OutputDebugString(TEXT("ERROR: "));
-		OutputDebugString(error.ErrorMessage());
-		OutputDebugString(TEXT("\n"));
-		MessageBox(NULL, TEXT("入力レイアウトを作成できませんでした。"), TEXT("エラー"), MB_OK);
-		return;
-	}
-
-	// 画像データの読み込み
-	// ファクトリーの作成
-	ComPtr<IWICImagingFactory2> factory;
-	hr = CoCreateInstance(
-		CLSID_WICImagingFactory2,
-		NULL, CLSCTX_INPROC_SERVER,
-		IID_PPV_ARGS(&factory));
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	// BITMAP デコーダーを作成
-	ComPtr<IWICBitmapDecoder> decoder;
-	hr = factory->CreateDecoderFromFilename(
-		L"Sample.png",
-		NULL, GENERIC_READ, WICDecodeOptions::WICDecodeMetadataCacheOnDemand,
-		&decoder);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	//ComPtr<IWICDdsDecoder> ddsDecoder;
-	//hr = decoder.As(&ddsDecoder);
-
-	// BITMAPフレームを取得
-	ComPtr<IWICBitmapFrameDecode> bitmapFrame;
-	hr = decoder->GetFrame(0, &bitmapFrame);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	//UINT arrayIndex = 16;
-	//UINT mipLevel = 32;
-	//UINT sliceIndex = 32;
-	//hr = ddsDecoder->GetFrame(arrayIndex, mipLevel, sliceIndex, &frame);
-	//if (FAILED(hr)) {
-	//	throw _com_error(hr);
-	//}
-
-	// FormatConverter
-	ComPtr<IWICFormatConverter> converter;
-	hr = factory->CreateFormatConverter(&converter);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-	hr = converter->Initialize(
-		bitmapFrame.Get(),
-		GUID_WICPixelFormat32bppBGRA,
-		WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeMedianCut);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	UINT width = 0;
-	UINT height = 0;
-	hr = converter->GetSize(&width, &height);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	// 画像フォーマットを取得
-	WICPixelFormatGUID wicFormat = {};
-	hr = converter->GetPixelFormat(&wicFormat);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	struct WIC2DXGI_Format
-	{
-		const GUID& wic;
-		DXGI_FORMAT dxgi;
-	};
-
-	// 画像フォーマットからdxgiフォーマットに変換する一覧を作成
-	WIC2DXGI_Format wic2dxgi_formats[] = {
-		{GUID_WICPixelFormat128bppRGBAFloat, DXGI_FORMAT_R32G32B32A32_FLOAT},
-		{GUID_WICPixelFormat64bppRGBAHalf, DXGI_FORMAT_R16G16B16A16_FLOAT},
-		{GUID_WICPixelFormat64bppRGBA, DXGI_FORMAT_R16G16B16A16_UNORM},
-		{GUID_WICPixelFormat32bppRGBA, DXGI_FORMAT_R8G8B8A8_UNORM},
-		{GUID_WICPixelFormat32bppBGRA, DXGI_FORMAT_B8G8R8A8_UNORM},
-		{GUID_WICPixelFormat32bppBGR, DXGI_FORMAT_B8G8R8X8_UNORM},
-		{GUID_WICPixelFormat24bppBGR, DXGI_FORMAT_B8G8R8X8_UNORM},
-		{GUID_WICPixelFormat32bppRGBA1010102XR, DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM},
-		{GUID_WICPixelFormat32bppRGBA1010102, DXGI_FORMAT_R10G10B10A2_UNORM},
-		{GUID_WICPixelFormat32bppRGBE, DXGI_FORMAT_R9G9B9E5_SHAREDEXP},
-		{GUID_WICPixelFormat16bppBGRA5551, DXGI_FORMAT_B5G5R5A1_UNORM},
-		{GUID_WICPixelFormat16bppBGR565, DXGI_FORMAT_B5G6R5_UNORM},
-		{GUID_WICPixelFormat32bppGrayFloat, DXGI_FORMAT_R32_FLOAT},
-		{GUID_WICPixelFormat16bppGrayHalf, DXGI_FORMAT_R16_FLOAT},
-		{GUID_WICPixelFormat16bppGray, DXGI_FORMAT_R16_UNORM},
-		{GUID_WICPixelFormat8bppGray, DXGI_FORMAT_R8_UNORM},
-		{GUID_WICPixelFormat8bppAlpha, DXGI_FORMAT_A8_UNORM},
-		{GUID_WICPixelFormat96bppRGBFloat, DXGI_FORMAT_R32G32B32_FLOAT},
-	};
-
-	// dxgiフォーマットを宣言
-	auto dxgiFormat = DXGI_FORMAT{};
-
-	// dxgiフォーマット一覧から取得した画像フォーマットと同じものを探す
-	for (auto& wic2dxgi_format : wic2dxgi_formats)
-	{
-		if (InlineIsEqualGUID(wicFormat, wic2dxgi_format.wic)) {
-			dxgiFormat = wic2dxgi_format.dxgi;
-		}
-		// ない場合はUNKNOWNとする
-		//dxgiFormat = DXGI_FORMAT_UNKNOWN;
-	}
-
-	const auto bufferSize = width * height * 4;
-	std::unique_ptr<BYTE[]> source = std::make_unique<BYTE[]>(bufferSize);
-	converter->CopyPixels(nullptr, width * 4, width * height * 4, source.get());
-
-	// 出力ストリームを作成
-	ComPtr<IWICStream> outputStream;
-	hr = factory->CreateStream(&outputStream);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-	// 保存先を指定
-	hr = outputStream->InitializeFromFilename(L"Sample.dds", GENERIC_WRITE);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	// DDS対応のエンコーダを作成
-	ComPtr<IWICBitmapEncoder> encoder;
-	hr = factory->CreateEncoder(GUID_ContainerFormatDds, NULL, &encoder);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	hr = encoder->Initialize(outputStream.Get(), WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	// IWICDdsEncoder を取得
-	ComPtr<IWICDdsEncoder> ddsEncoder;
-	hr = encoder.As(&ddsEncoder);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-	auto ddsParameters = WICDdsParameters{
-		.Width = 64,
-		.Height = 64,
-		.Depth = 1,
-		.MipLevels = 7,
-		.ArraySize = 1,
-		.DxgiFormat = DXGI_FORMAT::DXGI_FORMAT_BC1_UNORM,
-		.Dimension = WICDdsDimension::WICDdsTexture2D,
-		.AlphaMode = WICDdsAlphaMode::WICDdsAlphaModeOpaque,
-	};
-	hr = ddsEncoder->SetParameters(&ddsParameters);
-	if (FAILED(hr)) {
-		throw hr;
-	}
-
-	//ComPtr<IWICBitmapFrameEncode> newFrame;
-	//hr = ddsEncoder->CreateNewFrame(&newFrame, NULL, NULL, NULL);
-	//if (FAILED(hr)) {
-	//	throw _com_error(hr);
-	//}
-
-	try {
-		// テクスチャーを作成
-		//texture.reset(new Texture2D(
-		//	graphicsDevice,
-		//	width,
-		//	height,
-		//	dxgiFormat,
-		//	false
-		//	)
-		//);
-		texture = std::make_unique<Texture2D>(
-			graphicsDevice,
-			width,
-			height,
-			dxgiFormat,
-			false
-		);
-	}
-	catch (const _com_error& error) {
-		OutputDebugString(TEXT("ERROR: "));
-		OutputDebugString(error.ErrorMessage());
-		OutputDebugString(TEXT("\n"));
-		MessageBox(NULL, TEXT("テクスチャを作成できませんでした。"), TEXT("エラー"), MB_OK);
-		return;
-	}
-
-	// ピクセルデータを更新
-	texture->SetData(source.get());
+	
 }
 
 void Game::Update() noexcept
@@ -441,59 +98,6 @@ void Game::Update() noexcept
 
 void Game::Render() noexcept
 {
-	// 定数バッファーへ転送するデータソースを準備
-	XMMATRIX worldMatrix = XMMatrixIdentity();
-	worldMatrix *= XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	//XMVECTOR axis = XMVectorSet(1, 1, 0, 0);
-	//worldMatrix *= XMMatrixRotationAxis(axis, time);
-	worldMatrix *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	// ビュー行列を計算
-	XMVECTOR eyePosition = XMVectorSet(0, 1, -10, 1);
-	XMVECTOR focusPosition = XMVectorSet(0, 1, 0, 1);
-	XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-	XMMATRIX viewMatrix =
-		XMMatrixLookAtLH(eyePosition, focusPosition, upDirection);
-	// プロジェクション行列を計算
-	float fovAngleY = 60.0f;
-	float aspectRatio = 640 / 480.0f;
-	float nearZ = 0.3f;
-	float farZ = 1000.0f;
-	XMMATRIX projectionMatrix =
-		XMMatrixPerspectiveFovLH(XMConvertToRadians(fovAngleY), aspectRatio, nearZ, farZ);
-
-	MatricesPerFrame matricesPerFrame = {};
-	XMStoreFloat4x4(
-		&matricesPerFrame.worldMatrix,
-		XMMatrixTranspose(worldMatrix));
-	XMStoreFloat4x4(
-		&matricesPerFrame.viewMatrix,
-		XMMatrixTranspose(viewMatrix));
-	XMStoreFloat4x4(
-		&matricesPerFrame.projectionMatrix,
-		XMMatrixTranspose(projectionMatrix));
-	XMStoreFloat4x4(
-		&matricesPerFrame.worldViewProjectionMatrix,
-		XMMatrixTranspose(worldMatrix * viewMatrix * projectionMatrix));
-	// ライト
-	matricesPerFrame.lightPosition = DirectX::XMFLOAT4(1.0f, 2.0f, -2.0f, 0.0f);
-	// マテリアル
-	if (GetAsyncKeyState('D')) {
-		matricesPerFrame.materialDiffuse = DirectX::XMFLOAT4(1, 1, 1, 1);
-	}
-	else {
-		matricesPerFrame.materialDiffuse = DirectX::XMFLOAT4(0, 0, 0, 1);
-	}
-	if (GetAsyncKeyState('S')) {
-		matricesPerFrame.materialSpecularColor = DirectX::XMFLOAT3(1, 1, 1);
-		matricesPerFrame.materialSpecularPower = 1;
-	}
-	else {
-		matricesPerFrame.materialSpecularColor = DirectX::XMFLOAT3(0, 0, 0);
-	}
-
-	// 定数バッファーを更新
-	constantBuffer->SetData(&matricesPerFrame);
-
 	// レンダーターゲットを設定
 	ID3D11RenderTargetView* renderTargetViews[] = { swapChain->GetRenderTargetView() };
 	immediateContext->OMSetRenderTargets(
@@ -505,42 +109,7 @@ void Game::Render() noexcept
 	immediateContext->ClearDepthStencilView(swapChain->GetDepthStencilView(),
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	// ビューポートを設定
-	immediateContext->RSSetViewports(1, viewports);
-
-	// 頂点バッファーを設定
-	ID3D11Buffer* vertexBuffers[1] = { vertexBuffer->GetNativePointer() };
-	UINT strides[1] = { sizeof(VertexPositionNormalTexture) };
-	UINT offsets[1] = { 0 };
-	immediateContext->IASetVertexBuffers(
-		0, std::size(vertexBuffers),
-		vertexBuffers, strides, offsets);
-
-	// シェーダーを設定
-	immediateContext->VSSetShader(vertexShader->GetNativePointer(), NULL, 0);
-	immediateContext->GSSetShader(geometryShader->GetNativePointer(), NULL, 0);
-	immediateContext->PSSetShader(pixelShader->GetNativePointer(), NULL, 0);
-	// シェーダーに定数バッファーを設定
-	ID3D11Buffer* constantBuffers[1] = { constantBuffer->GetNativePointer() };
-	immediateContext->VSSetConstantBuffers(0, static_cast<UINT>(std::size(constantBuffers)), constantBuffers);
-	immediateContext->GSSetConstantBuffers(0, static_cast<UINT>(std::size(constantBuffers)), constantBuffers);
-	immediateContext->PSSetConstantBuffers(0, static_cast<UINT>(std::size(constantBuffers)), constantBuffers);
-	// ピクセルシェーダーにテクスチャーを設定
-	ID3D11ShaderResourceView* textureViews[] = { texture->GetShaderResourceView(), };
-	immediateContext->PSSetShaderResources(0, static_cast<UINT>(std::size(textureViews)), textureViews);
-	ID3D11SamplerState* samplerStates[] = { texture->GetSamplerState(), };
-	immediateContext->PSSetSamplers(0, static_cast<UINT>(std::size(samplerStates)), samplerStates);
-
-	// 頂点バッファーと頂点シェーダーの組合せに対応した入力レイアウトを設定
-	immediateContext->IASetInputLayout(inputLayout->GetNativePointer());
-	// プリミティブトポロジーとしてトライアングルを設定
-	immediateContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// インデックスバッファーを設定
-	immediateContext->IASetIndexBuffer(indexBuffer->GetNativePointer(), DXGI_FORMAT_R32_UINT, 0);
-
-	// 描画
-	immediateContext->DrawIndexed(indexCount, 0, 0);
+	OnRender();
 
 	// バックバッファーに描画したイメージをディスプレイに表示
 	HRESULT hr = S_OK;
@@ -557,6 +126,21 @@ void Game::Render() noexcept
 	}
 
 	OnRender();
+
+	UINT presentFlags = 0;
+	if (allowTearing) {
+		presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+	}
+	const auto presentParameters = DXGI_PRESENT_PARAMETERS{
+		.DirtyRectsCount = 0,
+		.pDirtyRects = nullptr,
+		.pScrollRect = nullptr,
+		.pScrollOffset = nullptr,
+	};
+	const auto hr = swapChain->Present(0, presentFlags, &presentParameters);
+	if (FAILED(hr)) {
+		return;
+	}
 
 	//// 位置座標
 	//XMFLOAT3 position = { 0, 0, 0 };

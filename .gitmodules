@@ -1,0 +1,3 @@
+[submodule "List0104/DirectXTex"]
+	path = List0104/DirectXTex
+	url = https://github.com/microsoft/DirectXTex.git

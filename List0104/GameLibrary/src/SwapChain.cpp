@@ -186,3 +186,8 @@ void SwapChain::Present(UINT syncInterval)
 {
 	ThrowIfFailed(swapChain->Present(syncInterval, 0));
 }
+
+DXGI_SWAP_CHAIN_DESC1* SwapChain::GetSwapChainDesc()
+{
+	return &swapChainDesc;
+}
