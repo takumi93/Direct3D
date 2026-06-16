@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,9 +21,12 @@
   <ItemGroup>
     <ClInclude Include="include\GameLibrary\AnalogInput.h" />
     <ClInclude Include="include\GameLibrary.h" />
+    <ClInclude Include="include\GameLibrary\ContentManager.h" />
     <ClInclude Include="include\GameLibrary\DigitalInput.h" />
     <ClInclude Include="include\GameLibrary\Game.h" />
+    <ClInclude Include="include\GameLibrary\Graphics.h" />
     <ClInclude Include="include\GameLibrary\Input.h" />
+    <ClInclude Include="include\GameLibrary\Texture2D.h" />
     <ClInclude Include="include\GameLibrary\Time.h" />
     <ClInclude Include="include\GameLibrary\Utility.h" />
     <ClInclude Include="src\GamePad.h" />
@@ -33,10 +36,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="g_BasicGeometryShader" />
+    <None Include="include\GameLibrary\ContentReader.inl" />
     <None Include="Shader\BasicShader.hlsli" />
     <None Include="src\.gitignore" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\GraphicsResource.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\Buffer.cpp" />
     <ClCompile Include="src\Game.cpp" />
