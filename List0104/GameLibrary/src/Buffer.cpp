@@ -45,20 +45,6 @@ void VertexBuffer::SetData(const void* data)
 	graphics->GetDeviceContext()->UpdateSubresource(buffer.Get(), 0, NULL, data, 0, 0);
 }
 
-//void VertexBuffer::Bind(UINT slot) {
-//	UINT offset = 0;
-//	ID3D11Buffer* buf = buffer.Get();
-//
-//	auto ctx = graphics->GetDeviceContext();
-//
-//	ctx->IASetVertexBuffers(
-//		slot,
-//		1,
-//		&buf,
-//		&stride,
-//		&offset);
-//}
-
 /// <summary>
 /// このクラスの新しいインスタンスを初期化します。
 /// </summary>

@@ -49,5 +49,5 @@ protected:
 	// 入力レイアウト
 	std::unique_ptr<GameLibrary::InputLayout> inputLayout;
 	// テクスチャー
-	std::unique_ptr<GameLibrary::Texture2D> texture;
+	//std::unique_ptr<GameLibrary::Texture2D> texture;
 };

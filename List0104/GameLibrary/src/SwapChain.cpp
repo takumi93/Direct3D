@@ -2,7 +2,8 @@
 // SwapChain.cpp
 // グラフィックス機能を提供するクラスが含まれます。
 //=============================================================================
-#include <GameLibrary/Game.h>
+//#include <GameLibrary/Game.h>
+#include <GameLibrary/Graphics.h>
 #include <GameLibrary/Utility.h>
 #include <comdef.h>
 
@@ -12,13 +13,17 @@ using namespace Microsoft::WRL;
 // このクラスのインスタンスを初期化します。
 SwapChain::SwapChain(
 	std::shared_ptr<Graphics> graphics, HWND window, int width, int height) 
+	: graphics(graphics)
+	, window(window)
+	, width(static_cast<UINT>(width))
+	, height(static_cast<UINT>(height))
 {
 	ComPtr<IDXGISwapChain1> currentSwapChain;
 	ComPtr<ID3D11Device5> device;
 	graphics->GetDevice()->QueryInterface(IID_PPV_ARGS(&device));
 
 	// 作成するスワップチェーンについての情報を格納
-	const auto swapChainDesc = DXGI_SWAP_CHAIN_DESC1{
+	auto swapChainDesc = DXGI_SWAP_CHAIN_DESC1{
 		.Width = static_cast<UINT>(width),
 		.Height = static_cast<UINT>(height),
 
@@ -41,14 +46,28 @@ SwapChain::SwapChain(
 		.Flags = 0,
 	};
 
+	if (graphics->IsTearingSupported()) {
+		swapChainDesc.Flags |= DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+	}
+
+	// フルスクリーン設定
+	const auto fullscreenDesc = DXGI_SWAP_CHAIN_FULLSCREEN_DESC{
+		.RefreshRate = {.Numerator = 0, .Denominator = 0, },
+		.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER::DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
+		.Scaling = DXGI_MODE_SCALING::DXGI_MODE_SCALING_UNSPECIFIED,
+		.Windowed = TRUE,
+	};
+
 	// 画面サイズを変える際(全画面表示とか)にスワップチェーンだけ変更する必要があるため
 	//スワップチェーンを作成
-	ThrowIfFailed(graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(
-		graphics->GetDevice(), Application::GetWindowHandle(), 
-		&swapChainDesc, nullptr, nullptr, 
-		&currentSwapChain));
+	{
+		ThrowIfFailed(graphics->GetDXGI_Factory()->CreateSwapChainForHwnd(
+			graphics->GetDevice(), window, 
+			&swapChainDesc, &fullscreenDesc, nullptr,
+			&currentSwapChain));
 
-	ThrowIfFailed(currentSwapChain.As(&swapChain));
+		ThrowIfFailed(currentSwapChain.As(&swapChain));
+	}
 
 	// バックバッファーを取得
 	{
@@ -57,6 +76,7 @@ SwapChain::SwapChain(
 
 		auto backBufferDesc = D3D11_TEXTURE2D_DESC1{};
 		backBuffer->GetDesc1(&backBufferDesc);
+
 		// レンダー ターゲット
 		auto format = DXGI_FORMAT{};
 		switch (backBufferDesc.Format) {
@@ -72,6 +92,7 @@ SwapChain::SwapChain(
 			format = backBufferDesc.Format;
 			break;
 		}
+
 		const auto renderTargetViewDesc = D3D11_RENDER_TARGET_VIEW_DESC1{
 			.Format = format,
 			.ViewDimension = D3D11_RTV_DIMENSION::D3D11_RTV_DIMENSION_TEXTURE2D,
@@ -158,15 +179,6 @@ SwapChain::SwapChain(
 
 		depthStencilBuffer.Reset();
 	}
-
-	// 初期化がすべて成功したらメンバー変数を更新する
-	this->graphics = graphics;
-	this->window = window;
-	this->swapChain = swapChain;
-	this->renderTargetView = renderTargetView;
-	this->depthStencilView = depthStencilView;
-	this->depthShaderResourceView = depthShaderResourceView;
-	this->stencilShaderResourceView = stencilShaderResourceView;
 }
 
 // ID3D11RenderTargetView を取得します。
@@ -181,13 +193,62 @@ ID3D11DepthStencilView* SwapChain::GetDepthStencilView()
 	return depthStencilView.Get();
 }
 
-// バックバッファーに描画したイメージをディスプレイに表示します。
-void SwapChain::Present(UINT syncInterval)
+void SwapChain::BeginRender(ID3D11DeviceContext4* deviceContext, DirectX::FXMVECTOR clearColor) 
 {
-	ThrowIfFailed(swapChain->Present(syncInterval, 0));
+	// レンダーターゲットを設定
+	ID3D11RenderTargetView* renderTargetViews[] = {
+		renderTargetView.Get(),
+	};
+
+	deviceContext->OMSetRenderTargets(
+		static_cast<UINT>(std::size(renderTargetViews)),
+		renderTargetViews,
+		depthStencilView.Get()
+	);
+
+	// 画面をクリアー
+	deviceContext->ClearRenderTargetView(
+		renderTargetView.Get(),
+		DirectX::XMColorSRGBToRGB(clearColor).m128_f32
+	);
+
+	deviceContext->ClearDepthStencilView(
+		depthStencilView.Get(),
+		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+		1.0f,
+		0
+	);
+
+	D3D11_VIEWPORT viewport{
+	.TopLeftX = 0,
+	.TopLeftY = 0,
+	.Width = static_cast<float>(width),
+	.Height = static_cast<float>(height),
+	.MinDepth = 0.0f,
+	.MaxDepth = 1.0f,
+	};
+
+	deviceContext->RSSetViewports(1, &viewport);
 }
 
-DXGI_SWAP_CHAIN_DESC1* SwapChain::GetSwapChainDesc()
+/// <summary>
+/// バックバッファーに描画したイメージをディスプレイに表示します。
+/// </summary>
+/// <param name="syncInterval"></param>
+void SwapChain::Present(UINT syncInterval)
 {
-	return &swapChainDesc;
+	UINT presentFlags = 0;
+
+	if (graphics->IsTearingSupported()){
+		presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
+	}
+
+	const auto presentParameters = DXGI_PRESENT_PARAMETERS{
+		.DirtyRectsCount = 0,
+		.pDirtyRects = nullptr,
+		.pScrollRect = nullptr,
+		.pScrollOffset = nullptr,
+	};
+
+	ThrowIfFailed(swapChain->Present1(syncInterval, presentFlags, &presentParameters));
 }

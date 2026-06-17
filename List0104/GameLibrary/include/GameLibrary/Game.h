@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Windows.h>
+#include <GameLibrary/Graphics.h>
 
 #include <memory>
 #include <string>
@@ -90,43 +91,7 @@ namespace GameLibrary {
 	// 
 	//=============================================================================
 
-	// グラフィックス機能を表します。
-	class Graphics final
-	{
-	public:
-		// このクラスのインスタンスを初期化します。
-		Graphics();
-		~Graphics() = default;
 
-		// IDXGIFactory1 を取得します。
-		IDXGIFactory2* GetDXGI_Factory();
-		// ID3D11Device を取得します。
-		ID3D11Device* GetDevice();
-		// ID3D11DeviceContext を取得します。
-		ID3D11DeviceContext* GetDeviceContext();
-
-	private:
-		// グラフィックデバイスを作成します。
-		void InitGraphicsDevice();
-
-		// ファクトリーを継承
-		// DXGI 1.6のファクトリー
-		Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
-		// アダプターを継承
-		// DXGI 1.1のアダプター
-		Microsoft::WRL::ComPtr<IDXGIAdapter4> dxgiAdapter;
-		// DXGI 1.1のデバイス
-		Microsoft::WRL::ComPtr<IDXGIDevice4> dxgiDevice;
-		// Direct3D 11のデバイス
-		Microsoft::WRL::ComPtr<ID3D11Device5> graphicsDevice;
-		// Direct3D 11のデバイス コンテキスト
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext4> immediateContext;
-		// Direct3D 11の機能レベル
-		D3D_FEATURE_LEVEL featureLevel = {};
-
-	protected:
-		DXGI_OUTPUT_DESC1 outputDesc = {};
-	};
 
 	// 頂点シェーダーを表します。
 	class BasicVertexShader
@@ -181,65 +146,65 @@ namespace GameLibrary {
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> shader;
 	};
 
-	// 頂点バッファーを表します。
-	class VertexBuffer
-	{
-	public:
-		// このクラスの新しいインスタンスを初期化します。
-		VertexBuffer(std::shared_ptr<Graphics> graphics, UINT byteWidth);
+	//// 頂点バッファーを表します。
+	//class VertexBuffer
+	//{
+	//public:
+	//	// このクラスの新しいインスタンスを初期化します。
+	//	VertexBuffer(std::shared_ptr<Graphics> graphics, UINT byteWidth);
 
-		~VertexBuffer() = default;
+	//	~VertexBuffer() = default;
 
-		// バッファーにデータを設定します。
-		void SetData(const void* data);
+	//	// バッファーにデータを設定します。
+	//	void SetData(const void* data);
 
-		// D3D11のネイティブポインターを取得します。
-		ID3D11Buffer* GetNativePointer();
+	//	// D3D11のネイティブポインターを取得します。
+	//	ID3D11Buffer* GetNativePointer();
 
-	private:
-		std::shared_ptr<Graphics> graphics;
-		Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+	//private:
+	//	std::shared_ptr<Graphics> graphics;
+	//	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
 
-		UINT stride = 0;
-	};
+	//	UINT stride = 0;
+	//};
 
-	// インデックスバッファーを表します。
-	class IndexBuffer
-	{
-	public:
-		// このクラスの新しいインスタンスを初期化します。
-		IndexBuffer(std::shared_ptr<Graphics> graphics, UINT byteWidth);
-		~IndexBuffer() = default;
+	//// インデックスバッファーを表します。
+	//class IndexBuffer
+	//{
+	//public:
+	//	// このクラスの新しいインスタンスを初期化します。
+	//	IndexBuffer(std::shared_ptr<Graphics> graphics, UINT byteWidth);
+	//	~IndexBuffer() = default;
 
-		// バッファーにデータを設定します。
-		void SetData(const void* data);
+	//	// バッファーにデータを設定します。
+	//	void SetData(const void* data);
 
-		// D3D11のネイティブポインターを取得します。
-		ID3D11Buffer* GetNativePointer();
+	//	// D3D11のネイティブポインターを取得します。
+	//	ID3D11Buffer* GetNativePointer();
 
-	private:
-		std::shared_ptr<Graphics> graphics;
-		Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
-	};
+	//private:
+	//	std::shared_ptr<Graphics> graphics;
+	//	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+	//};
 
-	// 定数バッファーを表します。
-	class ConstantBuffer
-	{
-	public:
-		// このクラスの新しいインスタンスを初期化します。
-		ConstantBuffer(std::shared_ptr<Graphics> graphics, size_t byteWidth);
-		~ConstantBuffer() = default;
+	//// 定数バッファーを表します。
+	//class ConstantBuffer
+	//{
+	//public:
+	//	// このクラスの新しいインスタンスを初期化します。
+	//	ConstantBuffer(std::shared_ptr<Graphics> graphics, size_t byteWidth);
+	//	~ConstantBuffer() = default;
 
-		// バッファーにデータを設定します。
-		void SetData(const void* data);
+	//	// バッファーにデータを設定します。
+	//	void SetData(const void* data);
 
-		// D3D11のネイティブポインターを取得します。
-		ID3D11Buffer* GetNativePointer();
+	//	// D3D11のネイティブポインターを取得します。
+	//	ID3D11Buffer* GetNativePointer();
 
-	private:
-		std::shared_ptr<Graphics> graphics;
-		Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
-	};
+	//private:
+	//	std::shared_ptr<Graphics> graphics;
+	//	Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+	//};
 
 	class InputLayout {
 	public:
@@ -255,65 +220,6 @@ namespace GameLibrary {
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
-	};
-
-	// スワップ チェーンを管理してレンダーターゲットの機能を提供するクラスを表します。
-	class SwapChain final
-	{
-	public:
-		// このクラスのインスタンスを初期化します。
-		SwapChain(std::shared_ptr<Graphics> graphics, HWND hWnd, int width, int height);
-		~SwapChain() = default;
-
-		// ID3D11RenderTargetView を取得します。
-		ID3D11RenderTargetView* GetRenderTargetView();
-		// ID3D11DepthStencilView を取得します。
-		ID3D11DepthStencilView* GetDepthStencilView();
-
-		// バックバッファーに描画したイメージをディスプレイに表示します。
-		void Present(UINT syncInterval);
-
-		DXGI_SWAP_CHAIN_DESC1* GetSwapChainDesc();
-
-	private:
-		// 継承
-		std::shared_ptr<Graphics> graphics;
-		
-		HWND window = nullptr;
-
-		DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
-
-		// スワップチェーン
-		Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain;
-		// レンダーターゲット
-		Microsoft::WRL::ComPtr<ID3D11RenderTargetView1> renderTargetView;
-		// 深度ステンシル
-		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
-		// 深度バッファーをシェーダーで利用するためのリソース ビュー
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView1> depthShaderResourceView;
-		// ステンシル バッファーをシェーダーで利用するためのリソース ビュー
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView1> stencilShaderResourceView;
-	};
-
-	class Texture2D
-	{
-	public:
-		Texture2D(
-			ID3D11Device* graphicsDevice,
-			UINT width, UINT height, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, bool mipChain = true);
-
-		~Texture2D() = default;
-
-		void SetData(const void* data);
-
-		ID3D11Texture2D* GetNativePointer();
-		ID3D11SamplerState* GetSamplerState();
-		ID3D11ShaderResourceView* GetShaderResourceView();
-
-	private:
-		Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
-		Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceView;
 	};
 
 	// アプリケーション全体を表します。
@@ -347,12 +253,14 @@ namespace GameLibrary {
 		std::unique_ptr<SwapChain> swapChain;
 
 		// Direct3D 11のデバイス コンテキスト
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> immediateContext;
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext4> deviceContext;
 
 	private:
 		std::wstring title = L"Game Title";
 		int width = 640;
 		int height = 480;
+		bool forceVSync = false;
+		bool useWarpAdapter = false;
 
 		// 画面クリアーに使用するカラー
 		DirectX::XMVECTORF32 clearColor = { 0 / 255.0f, 99 / 255.0f, 181 / 255.0f, 1.0f };
@@ -389,20 +297,20 @@ namespace GameLibrary {
 		//	float materialSpecularPower = 1;
 		//};
 
-		//// 自分で作ったクラスはunique or shared、既存のクラスはComptr
-		//// バッファー
-		//std::unique_ptr<VertexBuffer> vertexBuffer;
-		//std::unique_ptr<IndexBuffer> indexBuffer;
-		//// インデックスの数
-		//UINT indexCount = 0;
-		//// 定数バッファー
-		//std::unique_ptr<ConstantBuffer> constantBuffer;
-		//// シェーダー
-		//std::unique_ptr<BasicVertexShader> vertexShader;
-		//std::unique_ptr<BasicGeometryShader> geometryShader;
-		//std::unique_ptr<BasicPixelShader> pixelShader;
-		//// 入力レイアウト
-		//std::unique_ptr<InputLayout> inputLayout;
+		// 自分で作ったクラスはunique or shared、既存のクラスはComptr
+		// バッファー
+		std::unique_ptr<VertexBuffer> vertexBuffer;
+		std::unique_ptr<IndexBuffer> indexBuffer;
+		// インデックスの数
+		UINT indexCount = 0;
+		// 定数バッファー
+		std::unique_ptr<ConstantBuffer> constantBuffer;
+		// シェーダー
+		std::unique_ptr<BasicVertexShader> vertexShader;
+		std::unique_ptr<BasicGeometryShader> geometryShader;
+		std::unique_ptr<BasicPixelShader> pixelShader;
+		// 入力レイアウト
+		std::unique_ptr<InputLayout> inputLayout;
 		//// テクスチャー
 		//std::unique_ptr<Texture2D> texture;
 	};

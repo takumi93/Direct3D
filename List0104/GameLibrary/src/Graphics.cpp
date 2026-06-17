@@ -2,7 +2,7 @@
 // Graphics.cpp
 // グラフィックス機能を提供するクラスが含まれます。
 //=============================================================================
-#include <GameLibrary/Game.h>
+#include <GameLibrary/Graphics.h>
 #include <GameLibrary/Utility.h>
 #include <comdef.h>
 
@@ -63,27 +63,52 @@ namespace {
 	}
 }
 
-Graphics::Graphics() {
-	InitGraphicsDevice();
+Graphics::Graphics(bool forceVSync, bool useWarpAdapter) 
+	: dxgiFactory(dxgiFactory)
+	, dxgiAdapter(dxgiAdapter)
+	, dxgiDevice(dxgiDevice)
+	, graphicsDevice(graphicsDevice)
+	, deviceContext(deviceContext)
+	, featureLevel(featureLevel)
+{
+	InitGraphicsDevice(forceVSync, useWarpAdapter);
 }
 
-void Graphics::InitGraphicsDevice() {
-	HRESULT hr = S_OK;
-
-	// ファクトリーを作成
-	hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dxgiFactory));
-	if (FAILED(hr)) {
-		throw _com_error(hr);
+void Graphics::InitGraphicsDevice(bool forceVSync, bool useWarpAdapter)
+{
+	// ファクトリー作成
+	ThrowIfFailed(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dxgiFactory)));
+	if (forceVSync) {
+		allowTearing = false;
+	}
+	else {
+		BOOL featureSupportData = FALSE;
+		ThrowIfFailed(dxgiFactory->CheckFeatureSupport(
+			DXGI_FEATURE::DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+			&featureSupportData, sizeof featureSupportData));
+			allowTearing = featureSupportData;
 	}
 
-	dxgiAdapter = GetHardwareAdapter(dxgiFactory.Get());
 	// WARP アダプター
 	if (dxgiAdapter == nullptr) {
 		ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter)));
 	}
 
+	// DXGI アダプター
+	if (useWarpAdapter) {
+		ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter)));
+	}
+	else {
+		// HARDWARE アダプター
+		dxgiAdapter = GetHardwareAdapter(dxgiFactory.Get());
+		// WARP アダプター
+		if (dxgiAdapter == nullptr) {
+			ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter)));
+		}
+	}
+
 	auto adapterDesc = DXGI_ADAPTER_DESC3{};
-	dxgiAdapter->GetDesc3(&adapterDesc);
+	ThrowIfFailed(dxgiAdapter->GetDesc3(&adapterDesc));
 
 	// ディスプレイ出力
 	ComPtr<IDXGIOutput> currentOutput;
@@ -109,37 +134,6 @@ void Graphics::InitGraphicsDevice() {
 		}
 	}
 
-	//// アダプターを列挙する
-	//ComPtr<IDXGIAdapter4> currentAdapter;
-	//for (
-	//	UINT adapterIndex = 0;
-	//	dxgiFactory->EnumAdapterByGpuPreference(
-	//		adapterIndex,
-	//		DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-	//		IID_PPV_ARGS(&currentAdapter)) != DXGI_ERROR_NOT_FOUND;
-	//	adapterIndex++)
-	//{
-	//	DXGI_ADAPTER_DESC3 desc = {};
-	//	currentAdapter->GetDesc3(&desc);
-	//	// ソフトウェア アダプターは使用しない
-	//	if (desc.Flags & DXGI_ADAPTER_FLAG3::DXGI_ADAPTER_FLAG3_SOFTWARE) {
-	//		continue;
-	//	}
-	//	// 作成できるか試してみるだけ
-	//	if (SUCCEEDED(D3D11CreateDevice(
-	//		currentAdapter.Get(), D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_UNKNOWN, NULL,
-	//		creationFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)),
-	//		D3D11_SDK_VERSION, NULL, NULL, NULL)))
-	//	{
-	//		break;
-	//	}
-	//}
-	//dxgiAdapter = currentAdapter;
-	//currentAdapter.Reset();
-
-	// DXGIデバイスを継承
-	ComPtr<IDXGIDevice4> dxgiDevice;
-
 	// D3D11デバイスを継承
 	ComPtr<ID3D11Device> currentDevice;
 
@@ -151,62 +145,17 @@ void Graphics::InitGraphicsDevice() {
 	UINT creationFlags = 0;
 
 	// デバイス、デバイスコンテキストを作成
-	hr = D3D11CreateDevice(
-		dxgiAdapter.Get(), D3D_DRIVER_TYPE_UNKNOWN, NULL,
-		creationFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)), D3D11_SDK_VERSION,
-		&currentDevice, &featureLevel, &currentDeviceContext);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-	hr = currentDevice.As(&graphicsDevice);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-	hr = currentDeviceContext.As(&immediateContext);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
+	ThrowIfFailed(D3D11CreateDevice(
+		dxgiAdapter.Get(), D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_UNKNOWN, NULL,
+		creationFlags, featureLevels, static_cast<UINT>(std::size(featureLevels)),
+		D3D11_SDK_VERSION, &currentDevice, &featureLevel, &currentDeviceContext));
 
+	ThrowIfFailed(currentDevice.As(&graphicsDevice));
+	ThrowIfFailed(currentDevice.As(&dxgiDevice));
 	currentDevice.Reset();
+
+	ThrowIfFailed(currentDeviceContext.As(&deviceContext));
 	currentDeviceContext.Reset();
-
-	//// デバイス、デバイスコンテキストを作成
-	//hr = D3D11CreateDevice(
-	//	NULL, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, NULL, 0, D3D11_SDK_VERSION,
-	//	&device, &featureLevel, &deviceContext);
-	//if (FAILED(hr)) {
-	//	throw _com_error(hr);
-	//}
-
-	//// Direct3D 11デバイスからDXGIインターフェイスを順に変換し取得（取得できない場合エラー）
-	//// ID3D11Device -> IDXGIDevice1 -> IDXGIAdapter -> IDXGIAdapter1 -> IDXGIFactory1
-
-	////ID3D11Device->IDXGIDevice1
-	//if (FAILED(graphicsDevice.As(&dxgiDevice))) {
-	//	throw _com_error(hr);
-	//}
-	//{
-	//	//IDXGIDevice1->IDXGIAdapter
-	//	ComPtr<IDXGIAdapter> adapter;
-	//	if (FAILED(dxgiDevice->GetAdapter(&adapter))) {
-	//		throw _com_error(hr);
-	//	}
-	//	//IDXGIAdapter->IDXGIAdapter1
-	//	if (FAILED(adapter.As(&dxgiAdapter))) {
-	//		throw _com_error(hr);
-	//	}
-	//}
-	////IDXGIAdapter1->IDXGIFactory1
-	//if (FAILED(dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory)))) {
-	//	throw _com_error(hr);
-	//}
-
-	this->dxgiFactory = dxgiFactory;
-	this->dxgiAdapter = dxgiAdapter;
-	this->dxgiDevice = dxgiDevice;
-	this->graphicsDevice = graphicsDevice;
-	this->immediateContext = immediateContext;
-	this->featureLevel = featureLevel;
 }
 
 // IDXGIFactory1 を取得します。
@@ -224,5 +173,5 @@ ID3D11Device* Graphics::GetDevice()
 // ID3D11DeviceContext を取得します。
 ID3D11DeviceContext* Graphics::GetDeviceContext()
 {
-	return immediateContext.Get();
+	return deviceContext.Get();
 }

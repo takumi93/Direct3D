@@ -3,6 +3,7 @@
 // 
 //=============================================================================
 #include <GameLibrary/Game.h>
+#include <GameLibrary/Graphics.h>
 #include <GameLibrary/Utility.h>
 #include <DirectXMath.h>	// DirectXの算術ライブラリー
 #include <wincodec.h>
@@ -13,7 +14,6 @@
 #include <exception>
 #include <iterator>
 #include <new>
-#include <comdef.h>
 
 using namespace GameLibrary;
 using namespace DirectX;
@@ -36,15 +36,15 @@ void Game::Initialize(HWND hWnd)
 		// スワップチェーンを作成
 		swapChain = std::make_unique<SwapChain>(graphics, window, width, height);
 
-		// ビューポート
-		viewport = {
-		.TopLeftX = 0.0f,
-		.TopLeftY = 0.0f,
-		.Width = static_cast<FLOAT>(swapChain->GetSwapChainDesc()->Width),
-		.Height = static_cast<FLOAT>(swapChain->GetSwapChainDesc()->Height),
-		.MinDepth = D3D11_MIN_DEPTH,
-		.MaxDepth = D3D11_MAX_DEPTH,
-		};
+		//// ビューポート
+		//viewport = {
+		//.TopLeftX = 0.0f,
+		//.TopLeftY = 0.0f,
+		//.Width = static_cast<FLOAT>(swapChain->GetWidth()),
+		//.Height = static_cast<FLOAT>(swapChain->GetHeight()),
+		//.MinDepth = D3D11_MIN_DEPTH,
+		//.MaxDepth = D3D11_MAX_DEPTH,
+		//};
 	}
 	catch (const std::exception& error) {
 		OutputDebugStringA("ERROR: ");
@@ -60,33 +60,31 @@ void Game::Initialize(HWND hWnd)
 		MessageBoxW(NULL, TEXT("グラフィックデバイスを初期化できませんでした。"), TEXT("エラー"), MB_OK);
 		return;
 	}
+	
+	deviceContext = graphics->GetDeviceContext();
 
-	HRESULT hr = S_OK;
-	const auto graphicsDevice = graphics->GetDevice();
-	immediateContext = graphics->GetDeviceContext();
+	//try {
+	//	// 頂点バッファーを作成
+	//	//vertexBuffer.reset(new VertexBuffer(graphics, sizeof vertices));
+	//	vertexBuffer = std::make_unique<VertexBuffer>(graphics, sizeof vertices);
+	//	// インデックスバッファーを作成
+	//	//indexBuffer.reset(new IndexBuffer(graphics, sizeof indices));
+	//	indexBuffer = std::make_unique<IndexBuffer>(graphics, sizeof indices);
 
-	try {
-		// 頂点バッファーを作成
-		//vertexBuffer.reset(new VertexBuffer(graphics, sizeof vertices));
-		vertexBuffer = std::make_unique<VertexBuffer>(graphics, sizeof vertices);
-		// インデックスバッファーを作成
-		//indexBuffer.reset(new IndexBuffer(graphics, sizeof indices));
-		indexBuffer = std::make_unique<IndexBuffer>(graphics, sizeof indices);
+	//	// バッファーにデータを転送
+	//	vertexBuffer->SetData(vertices);
+	//	indexBuffer->SetData(indices);
+	//}
+	//catch (const _com_error& error) {
+	//	OutputDebugString(TEXT("ERROR: "));
+	//	OutputDebugString(error.ErrorMessage());
+	//	OutputDebugString(TEXT("\n"));
+	//	MessageBox(NULL, TEXT("バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
+	//	return;
+	//}
 
-		// バッファーにデータを転送
-		vertexBuffer->SetData(vertices);
-		indexBuffer->SetData(indices);
-	}
-	catch (const _com_error& error) {
-		OutputDebugString(TEXT("ERROR: "));
-		OutputDebugString(error.ErrorMessage());
-		OutputDebugString(TEXT("\n"));
-		MessageBox(NULL, TEXT("バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
-		return;
-	}
-
-	constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
-	constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
+	//constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
+	//constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
 
 	
 }
@@ -98,49 +96,11 @@ void Game::Update() noexcept
 
 void Game::Render() noexcept
 {
-	// レンダーターゲットを設定
-	ID3D11RenderTargetView* renderTargetViews[] = { swapChain->GetRenderTargetView() };
-	immediateContext->OMSetRenderTargets(
-		_countof(renderTargetViews), renderTargetViews, 
-		swapChain->GetDepthStencilView());
-	
-	// 画面をクリアー
-	immediateContext->ClearRenderTargetView(swapChain->GetRenderTargetView(), clearColor);
-	immediateContext->ClearDepthStencilView(swapChain->GetDepthStencilView(),
-		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	swapChain->BeginRender(deviceContext.Get(), clearColor);
 
 	OnRender();
 
-	// バックバッファーに描画したイメージをディスプレイに表示
-	HRESULT hr = S_OK;
-	try {
-		swapChain->Present(1);
-	}
-	catch (const _com_error& error) {
-		OutputDebugString(TEXT("ERROR: "));
-		OutputDebugString(error.ErrorMessage());
-		OutputDebugString(TEXT("\n"));
-		MessageBox(window,
-			TEXT("グラフィックデバイスが物理的に取り外されたか、ドライバーがアップデートされました。"),
-			TEXT("エラー"), MB_OK);
-	}
-
-	OnRender();
-
-	UINT presentFlags = 0;
-	if (allowTearing) {
-		presentFlags |= DXGI_PRESENT_ALLOW_TEARING;
-	}
-	const auto presentParameters = DXGI_PRESENT_PARAMETERS{
-		.DirtyRectsCount = 0,
-		.pDirtyRects = nullptr,
-		.pScrollRect = nullptr,
-		.pScrollOffset = nullptr,
-	};
-	const auto hr = swapChain->Present(0, presentFlags, &presentParameters);
-	if (FAILED(hr)) {
-		return;
-	}
+	swapChain->Present(0);
 
 	//// 位置座標
 	//XMFLOAT3 position = { 0, 0, 0 };
