@@ -9,8 +9,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "Game\Game.vcxproj",
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WIC_Sample", "WIC_Sample\WIC_Sample.vcxproj", "{C5BA771D-E5FA-439A-A75E-32A97CC216D3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{950B6411-4DAC-40DD-8575-E03739952D0E} = {950B6411-4DAC-40DD-8575-E03739952D0E}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameLibrary", "GameLibrary\GameLibrary.vcxproj", "{950B6411-4DAC-40DD-8575-E03739952D0E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77} = {371B9FA9-4C90-4AC6-A123-ACED756D6C77}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "DirectXTex\DirectXTex\DirectXTex_Desktop_2022.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
 EndProject

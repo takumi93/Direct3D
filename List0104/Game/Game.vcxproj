@@ -73,11 +73,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\GameLibrary\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\GameLibrary\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\DirectXTex\DirectXTex\Bin\Desktop_2022\$(Platform)\$(Configuration);..\GameLibrary\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\GameLibrary\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\GameLibrary\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>..\DirectXTex\DirectXTex\Bin\Desktop_2022\$(Platform)\$(Configuration);..\GameLibrary\lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

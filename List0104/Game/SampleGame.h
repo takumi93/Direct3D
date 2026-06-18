@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GameLibrary.h>
+#include <memory>
 
 class SampleGame : public GameLibrary::Game
 {
@@ -12,42 +13,70 @@ protected:
 	void OnUpdate() noexcept override;
 	void OnRender() noexcept override;
 
-	// 定数バッファーを介してシェーダーに毎フレーム送る行列データを表します。
-	struct MatricesPerFrame {
-		DirectX::XMFLOAT4X4 worldMatrix;
-		DirectX::XMFLOAT4X4 viewMatrix;
-		DirectX::XMFLOAT4X4 projectionMatrix;
-		DirectX::XMFLOAT4X4 worldViewProjectionMatrix;
+private:
+	std::unique_ptr<GameLibrary::ContentManager> contentManager;
 
-		// カメラの位置座標
-		DirectX::XMFLOAT4 viewPosition = DirectX::XMFLOAT4(0, 1, -10, 1);
+	// メイン カメラ
+	DirectX::XMFLOAT3 cameraPosition = { 0, 1, -10 };
+	DirectX::XMFLOAT4 cameraRotation = { 0, 0, 0, 1 };
+	// プロジェクション
+	float fieldOfView = 60.0f;
+	float clipPlaneNear = 0.3f;
+	float clipPlaneFar = 1000;
+	bool orthographic = false;
+	float orthographicSize = 10;
 
-		// ライトの位置座標(平行光源 w = 0, 点光源 w = 1)
-		DirectX::XMFLOAT4 lightPosition = DirectX::XMFLOAT4(1.0f, 2.0f, -2.0f, 1.0f);
-
-		// マテリアルの表面カラー
-		DirectX::XMFLOAT4 materialDiffuse = DirectX::XMFLOAT4(1, 1, 0, 1);
-
-		// 鏡面反射の色(r, g, b) = (x, y, z)
-		DirectX::XMFLOAT3 materialSpecularColor = DirectX::XMFLOAT3(1, 1, 1);
-		// 鏡面反射の強さ(float) = w
-		float materialSpecularPower = 1;
+	struct ConstantsPerFrame
+	{
+		DirectX::XMFLOAT4X4 MatrixView;
+		DirectX::XMFLOAT4X4 MatrixProjection;
+		DirectX::XMFLOAT4X4 MatrixViewProjection;
 	};
-	MatricesPerFrame matricesPerFrame = {};
+	ConstantsPerFrame constantsPerFrame = {};
+	std::shared_ptr<GameLibrary::ConstantBuffer> constantBufferPerFrame;
 
-	// バッファー
-	std::unique_ptr<GameLibrary::VertexBuffer> vertexBuffer;
-	std::unique_ptr<GameLibrary::IndexBuffer> indexBuffer;
-	// インデックスの数
-	UINT indexCount = 0;
-	// 定数バッファー
-	std::unique_ptr<GameLibrary::ConstantBuffer> constantBuffer;
-	// シェーダー
-	std::unique_ptr<GameLibrary::BasicVertexShader> vertexShader;
-	std::unique_ptr<GameLibrary::BasicGeometryShader> geometryShader;
-	std::unique_ptr<GameLibrary::BasicPixelShader> pixelShader;
+	struct ConstantsPerDraw
+	{
+		DirectX::XMFLOAT4X4 MatrixWorld;
+	};
+	ConstantsPerDraw constantsPerDraw = {};
+	std::shared_ptr<GameLibrary::ConstantBuffer> constantBufferPerDraw;
+
+	// オブジェクト
+	DirectX::XMVECTOR localScale = { 1, 1, 1, };
+	DirectX::XMVECTOR localRotation = DirectX::XMQuaternionIdentity();
+	DirectX::XMVECTOR localPosition = { 0, 0, 0, };
+	DirectX::XMFLOAT4 albedoColor = { 1, 1, 1, 1 };
+
+	// 頂点バッファー
+	std::shared_ptr<GameLibrary::StaticVertexBuffer> vertexBuffer;
+	UINT vertexOffset = 0;
+
+	// インデックスバッファー
+	std::shared_ptr<GameLibrary::IndexBuffer> indexBuffer;
+	UINT indexOffset = 0;
+
+	UINT startIndexLocation = 0;
+	INT baseVertexLocation = 0;
+
 	// 入力レイアウト
-	std::unique_ptr<GameLibrary::InputLayout> inputLayout;
+	std::shared_ptr<GameLibrary::InputLayout> inputLayout;
+
+	// シェーダーを参照
+	GameLibrary::VertexShader* vertexShader = nullptr;
+	GameLibrary::GeometryShader* geometryShader = nullptr;
+	GameLibrary::PixelShader* pixelShader = nullptr;
+
 	// テクスチャー
-	//std::unique_ptr<GameLibrary::Texture2D> texture;
+	std::shared_ptr<GameLibrary::Texture2D> texture;
+
+	// マテリアル
+	struct ConstantsPerMaterial
+	{
+		DirectX::XMFLOAT4 Albedo;
+	};
+	ConstantsPerMaterial constantsPerMaterial = {};
+
+	// 定数バッファー
+	std::shared_ptr<GameLibrary::ConstantBuffer> constantBufferPerMaterial;
 };

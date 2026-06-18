@@ -1,3 +1,40 @@
+cbuffer ConstantBufferPerDraw
+{
+    matrix matrixWorld;
+};
+
+cbuffer ConstantBufferPerFrame
+{
+    matrix matrixView;
+    matrix matrixProjection;
+    matrix matrixViewProjection;
+};
+
+static const matrix matrixWorldViewProjection = mul(matrixWorld, matrixViewProjection);
+
+struct VertexShaderInput_Sprite
+{
+    float4 position : POSITION;
+    float2 texCoord : TEXCOORD0;
+};
+
+struct VertexShaderOutput_Sprite
+{
+    float4 position : SV_POSITION;
+    float2 texCoord : TEXCOORD0;
+};
+
+typedef VertexShaderOutput_Sprite GeometryShaderInput_Sprite;
+
+struct GeometryShaderOutput_Sprite
+{
+    float4 position : SV_POSITION;
+    float2 texCoord : TEXCOORD0;
+};
+
+typedef GeometryShaderOutput_Sprite PixelShaderInput_Sprite;
+
+
 // 毎フレーム更新する定数バッファー
 cbuffer ConstantBufferPerFrame
 {

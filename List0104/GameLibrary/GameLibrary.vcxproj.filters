@@ -48,11 +48,36 @@
     <ClInclude Include="src\Mouse.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="include\GameLibrary\ContentManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameLibrary\Graphics.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameLibrary\Texture2D.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameLibrary\Buffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ConstantBuffer.cpp">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameLibrary\InputLayout.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GameLibrary\Shader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="g_BasicGeometryShader" />
     <None Include="src\.gitignore" />
     <None Include="Shader\BasicShader.hlsli" />
+    <None Include="include\GameLibrary\ContentReader.inl">
+      <Filter>ヘッダー ファイル</Filter>
+    </None>
+    <None Include="Shader\SpriteShader.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application.cpp">
@@ -100,10 +125,29 @@
     <ClCompile Include="src\Time.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\GraphicsResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IndexBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VertexBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ContentManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ContentReader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shader\BasicGeometryShader.hlsl" />
     <FxCompile Include="Shader\BasicPixelShader.hlsl" />
     <FxCompile Include="Shader\BasicVertexShader.hlsl" />
+    <FxCompile Include="Shader\InputSignature_SpriteVertex.hlsl" />
+    <FxCompile Include="Shader\SpriteGeometryShader.hlsl" />
+    <FxCompile Include="Shader\SpritePixelShader.hlsl" />
+    <FxCompile Include="Shader\SpriteVertexShader.hlsl" />
   </ItemGroup>
 </Project>

@@ -35,9 +35,9 @@ namespace GameLibrary
 		// IDXGIFactory1 を取得します。
 		IDXGIFactory2* GetDXGI_Factory();
 		// ID3D11Device を取得します。
-		ID3D11Device* GetDevice();
+		ID3D11Device5* GetDevice();
 		// ID3D11DeviceContext を取得します。
-		ID3D11DeviceContext* GetDeviceContext();
+		ID3D11DeviceContext4* GetDeviceContext();
 
 		/// <summary>
 		/// ティアリングする時に使用する判定を取得します。

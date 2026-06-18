@@ -1,7 +1,3 @@
-//=============================================================================
-// Game.cpp
-// 
-//=============================================================================
 #include <GameLibrary/Game.h>
 #include <GameLibrary/Graphics.h>
 #include <GameLibrary/Utility.h>
@@ -14,6 +10,10 @@
 #include <exception>
 #include <iterator>
 #include <new>
+
+#include "SpriteVertexShader.h"
+#include "SpriteGeometryShader.h"
+#include "SpritePixelShader.h"
 
 using namespace GameLibrary;
 using namespace DirectX;
@@ -32,7 +32,7 @@ void Game::Initialize(HWND hWnd)
 		//window = std::make_shared<MainWindow>();
 		window = hWnd;
 		// グラフィックデバイスを作成
-		graphics = std::make_shared<Graphics>();
+		graphics = std::make_shared<Graphics>(forceVSync, useWarpAdapter);
 		// スワップチェーンを作成
 		swapChain = std::make_unique<SwapChain>(graphics, window, width, height);
 
@@ -60,8 +60,15 @@ void Game::Initialize(HWND hWnd)
 		MessageBoxW(NULL, TEXT("グラフィックデバイスを初期化できませんでした。"), TEXT("エラー"), MB_OK);
 		return;
 	}
-	
-	deviceContext = graphics->GetDeviceContext();
+
+	spriteVertexShader = std::make_unique<VertexShader>(
+		graphics->GetDevice(), g_SpriteVertexShader, sizeof g_SpriteVertexShader);
+	spriteGeometryShader = std::make_unique<GeometryShader>(
+		graphics->GetDevice(), g_SpriteGeometryShader, sizeof g_SpriteGeometryShader);
+	spritePixelShader = std::make_unique<PixelShader>(
+		graphics->GetDevice(), g_SpritePixelShader, sizeof g_SpritePixelShader);
+
+	OnInitialize();
 
 	//try {
 	//	// 頂点バッファーを作成
@@ -70,23 +77,6 @@ void Game::Initialize(HWND hWnd)
 	//	// インデックスバッファーを作成
 	//	//indexBuffer.reset(new IndexBuffer(graphics, sizeof indices));
 	//	indexBuffer = std::make_unique<IndexBuffer>(graphics, sizeof indices);
-
-	//	// バッファーにデータを転送
-	//	vertexBuffer->SetData(vertices);
-	//	indexBuffer->SetData(indices);
-	//}
-	//catch (const _com_error& error) {
-	//	OutputDebugString(TEXT("ERROR: "));
-	//	OutputDebugString(error.ErrorMessage());
-	//	OutputDebugString(TEXT("\n"));
-	//	MessageBox(NULL, TEXT("バッファーを作成できませんでした。"), TEXT("エラー"), MB_OK);
-	//	return;
-	//}
-
-	//constantBufferPerFrame.materialColor = XMFLOAT4(1, 238 / 255.0f, 0, 1);
-	//constantBufferPerFrame.lightPosition = XMFLOAT4(1, 2, -2, 1);
-
-	
 }
 
 void Game::Update() noexcept
@@ -96,7 +86,9 @@ void Game::Update() noexcept
 
 void Game::Render() noexcept
 {
-	swapChain->BeginRender(deviceContext.Get(), clearColor);
+	auto deviceContext = graphics->GetDeviceContext();
+
+	swapChain->BeginRender(deviceContext, clearColor);
 
 	OnRender();
 

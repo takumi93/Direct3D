@@ -1,134 +1,40 @@
-//=============================================================================
-// Shaders.cpp
-// 頂点、ジオメトリ、ピクセル他のシェーダーを管理する機能が含まれます。
-//=============================================================================
-#include <GameLibrary/Game.h>
-#include "BasicVertexShader.h"
-#include "BasicGeometryShader.h"
-#include "BasicPixelShader.h"
-#include <comdef.h>
+#include <GameLibrary/Shader.h>
+#include <GameLibrary/Utility.h>
 
 using namespace GameLibrary;
-using namespace Microsoft::WRL;
 
-/// <summary>
-/// このクラスの新しいインスタンスを初期化します。
-/// </summary>
-/// <param name="graphics"></param>
-BasicVertexShader::BasicVertexShader(std::shared_ptr<Graphics> graphics)
+VertexShader::VertexShader(ID3D11Device5* graphicsDevice, const void* shaderBytecode, size_t bytecodeLength)
+	: BaseShader(graphicsDevice)
 {
-	ComPtr<ID3D11VertexShader> shader;
-	const auto hr = graphics->GetDevice()->CreateVertexShader(
-		g_BasicVertexShader, ARRAYSIZE(g_BasicVertexShader), NULL,
-		&shader);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	this->shader = shader;
+	ThrowIfFailed(graphicsDevice->CreateVertexShader(
+		shaderBytecode, bytecodeLength, NULL, &shader));
 }
 
-///// <summary>
-///// 
-///// </summary>
-//BasicVertexShader::~BasicVertexShader()
-//{
-//
-//}
-
-/// <summary>
-/// D3D11のネイティブポインターを取得します。
-/// </summary>
-/// <returns></returns>
-ID3D11VertexShader* BasicVertexShader::GetNativePointer()
+void VertexShader::Apply(ID3D11DeviceContext4* deviceContext) noexcept
 {
-	return shader.Get();
+	deviceContext->VSSetShader(shader.Get(), NULL, 0);
 }
 
-/// <summary>
-/// このシェーダーのバイトコードを取得します。
-/// </summary>
-/// <returns></returns>
-const BYTE* BasicVertexShader::GetBytecode()
+GeometryShader::GeometryShader(ID3D11Device5* graphicsDevice, const void* shaderBytecode, size_t bytecodeLength)
+	: BaseShader(graphicsDevice)
 {
-	return g_BasicVertexShader;
+	ThrowIfFailed(graphicsDevice->CreateGeometryShader(
+		shaderBytecode, bytecodeLength, NULL, &shader));
 }
 
-/// <summary>
-/// バイトコードのサイズを取得します。
-/// </summary>
-/// <returns></returns>
-SIZE_T BasicVertexShader::GetBytecodeLength()
+void GeometryShader::Apply(ID3D11DeviceContext4* deviceContext) noexcept
 {
-	return ARRAYSIZE(g_BasicVertexShader);
+	deviceContext->GSSetShader(shader.Get(), NULL, 0);
 }
 
-/// <summary>
-/// このクラスの新しいインスタンスを初期化します。
-/// </summary>
-/// <param name="graphics"></param>
-BasicGeometryShader::BasicGeometryShader(std::shared_ptr<Graphics> graphics)
+PixelShader::PixelShader(ID3D11Device5* graphicsDevice, const void* shaderBytecode, size_t bytecodeLength)
+	: BaseShader(graphicsDevice)
 {
-	ComPtr<ID3D11GeometryShader> shader;
-	const auto hr = graphics->GetDevice()->CreateGeometryShader(
-		g_BasicGeometryShader, ARRAYSIZE(g_BasicGeometryShader), NULL,
-		&shader);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	this->shader = shader;
+	ThrowIfFailed(graphicsDevice->CreatePixelShader(
+		shaderBytecode, bytecodeLength, NULL, &shader));
 }
 
-//// デストラクタ―
-///// <summary>
-///// 
-///// </summary>
-//BasicGeometryShader::~BasicGeometryShader()
-//{
-//
-//}
-
-/// <summary>
-/// D3D11のネイティブポインターを取得します。
-/// </summary>
-/// <returns></returns>
-ID3D11GeometryShader* BasicGeometryShader::GetNativePointer()
+void PixelShader::Apply(ID3D11DeviceContext4* deviceContext) noexcept
 {
-	return shader.Get();
-}
-
-/// <summary>
-/// このクラスの新しいインスタンスを初期化します。
-/// </summary>
-/// <param name="graphics"></param>
-BasicPixelShader::BasicPixelShader(std::shared_ptr<Graphics> graphics)
-{
-	ComPtr<ID3D11PixelShader> shader;
-	const auto hr = graphics->GetDevice()->CreatePixelShader(
-		g_BasicPixelShader, ARRAYSIZE(g_BasicPixelShader), NULL,
-		&shader);
-	if (FAILED(hr)) {
-		throw _com_error(hr);
-	}
-
-	this->shader = shader;
-}
-
-//// デストラクタ―
-///// <summary>
-///// 
-///// </summary>
-//BasicPixelShader::~BasicPixelShader()
-//{
-//
-//}
-
-/// <summary>
-/// D3D11のネイティブポインターを取得します。
-/// </summary>
-/// <returns></returns>
-ID3D11PixelShader* BasicPixelShader::GetNativePointer()
-{
-	return shader.Get();
+	deviceContext->PSSetShader(shader.Get(), NULL, 0);
 }

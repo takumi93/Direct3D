@@ -11,15 +11,15 @@ using namespace Microsoft::WRL;
 
 namespace {
 #if defined(_DEBUG)
-	// DEBUGビルドの際にDirect3Dのデバッグ表示機能を持たせる
-	constexpr UINT factoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+	//// DEBUGビルドの際にDirect3Dのデバッグ表示機能を持たせる
+	//constexpr UINT factoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 	constexpr UINT creationFlags =
 		D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_DEBUG |
 		D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_DEBUGGABLE;
 	//constexpr UINT creationFlag = D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_DEBUG;
 #else
-	constexpr UINT factoryFlags = 0;
-	constexpr UINT creationFlags = 0;
+	//constexpr UINT factoryFlags = 0;
+	constexpr UINT creationFlags = D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #endif
 
 	constexpr D3D_FEATURE_LEVEL featureLevels[] = {
@@ -64,18 +64,18 @@ namespace {
 }
 
 Graphics::Graphics(bool forceVSync, bool useWarpAdapter) 
-	: dxgiFactory(dxgiFactory)
-	, dxgiAdapter(dxgiAdapter)
-	, dxgiDevice(dxgiDevice)
-	, graphicsDevice(graphicsDevice)
-	, deviceContext(deviceContext)
-	, featureLevel(featureLevel)
 {
 	InitGraphicsDevice(forceVSync, useWarpAdapter);
 }
 
 void Graphics::InitGraphicsDevice(bool forceVSync, bool useWarpAdapter)
 {
+	// DXGI ファクトリー
+#if defined(_DEBUG)
+	constexpr UINT factoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+#else
+	constexpr UINT factoryFlags = 0;
+#endif
 	// ファクトリー作成
 	ThrowIfFailed(CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&dxgiFactory)));
 	if (forceVSync) {
@@ -165,13 +165,13 @@ IDXGIFactory2* Graphics::GetDXGI_Factory()
 }
 
 // ID3D11Device を取得します。
-ID3D11Device* Graphics::GetDevice()
+ID3D11Device5* Graphics::GetDevice()
 {
 	return graphicsDevice.Get();
 }
 
 // ID3D11DeviceContext を取得します。
-ID3D11DeviceContext* Graphics::GetDeviceContext()
+ID3D11DeviceContext4* Graphics::GetDeviceContext()
 {
 	return deviceContext.Get();
 }

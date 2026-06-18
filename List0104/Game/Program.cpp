@@ -8,7 +8,7 @@
 #include <crtdbg.h>
 #endif
 
-#include <GameLibrary.h>
+#include "SampleGame.h"
 
 using namespace GameLibrary;
 
@@ -26,6 +26,6 @@ int WINAPI wWinMain(
 	.Width = 1280,
 	.Height = 720,
 	};
-	Game game(settings);
+	SampleGame game(settings);
 	return Application::Run(&game, hInstance, nShowCmd);
 }
